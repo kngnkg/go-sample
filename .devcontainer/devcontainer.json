@@ -24,6 +24,7 @@
     "extensions": [
 		"golang.go",
 		"oderwat.indent-rainbow",
-		"eamodio.gitlens"
+		"eamodio.gitlens",
+		"ms-vscode.makefile-tools"
 	]
   }

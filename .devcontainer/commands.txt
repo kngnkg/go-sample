@@ -1,1 +1,10 @@
+## 実行
+$ go run . 18080
+
+----
+
 $ go get golang.org/x/sync
+
+$ go get -u github.com/gin-gonic/gin
+
+$ go get github.com/stretchr/testify
