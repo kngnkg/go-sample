@@ -14,7 +14,10 @@ func main() {
 		os.Exit(1)
 	}
 	r := setupRouter()
-	r.Run(":" + os.Args[1])
+	if err := r.Run(":" + os.Args[1]); err != nil {
+		log.Printf("failed to terminate server: %v", err)
+		os.Exit(1)
+	}
 }
 
 func setupRouter() *gin.Engine {
