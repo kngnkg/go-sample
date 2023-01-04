@@ -1,7 +1,7 @@
 name: golang-ci
 on:
   pull_request:
-    paths;
+    paths:
       - "**.go"
       - .github/workflows/golangci.yml
 jobs:
