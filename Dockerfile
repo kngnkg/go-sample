@@ -25,6 +25,8 @@ CMD ["./app"]
 
 FROM golang:latest as dev
 RUN apt update
+# Gitの補完を設定
+RUN echo "source /usr/share/bash-completion/completions/git" >> ~/.bashrc
 # Module ModeをONにする
 ENV GO111MODULE on
 WORKDIR /app
