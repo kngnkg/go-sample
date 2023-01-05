@@ -8,3 +8,5 @@ $ go get golang.org/x/sync
 $ go get -u github.com/gin-gonic/gin
 
 $ go get github.com/stretchr/testify
+
+$ go get -u github.com/caarlos0/env/v6
