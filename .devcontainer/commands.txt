@@ -1,6 +1,17 @@
 ## 実行
 $ go run . 18080
 
+## Graceful-Shutdownの確認
+### デプロイ用コンテナイメージの作成
+$ make build
+### 28000ポートで動作確認用コンテナの起動
+$ docker run -p 28000:80 kwtryo/go-sample:latest
+### 別ターミナルでcurl
+$ time curl -i localhost:28000/ping
+### 5秒経過前にdocker runコマンドを中断
+CTRL+C
+
+
 ----
 
 $ go get golang.org/x/sync
