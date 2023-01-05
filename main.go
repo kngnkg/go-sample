@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/kwtryo/go-sample/config"
-	"github.com/kwtryo/go-sample/router"
 )
 
 // go run . {任意のポート番号}
@@ -28,7 +27,7 @@ func run() error {
 		return err
 	}
 
-	router := router.Create()
+	router := setupRouter()
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),
 		Handler: router,

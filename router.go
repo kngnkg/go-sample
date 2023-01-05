@@ -1,4 +1,4 @@
-package router
+package main
 
 import (
 	"net/http"
@@ -6,8 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Create creates the gin engine with all routes.
-func Create() *gin.Engine {
+func setupRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/ping", func(c *gin.Context) {
 		// // graceful shutdownの確認

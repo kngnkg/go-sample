@@ -1,4 +1,4 @@
-package router
+package main
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestPingRoute(t *testing.T) {
-	router := Create()
+	router := setupRouter()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
