@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/config"
+	"github.com/kwtryo/go-sample/router"
 )
 
 // go run . {任意のポート番号}
@@ -28,16 +28,10 @@ func run() error {
 		return err
 	}
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		// graceful shutdownの確認
-		time.Sleep(5 * time.Second)
-		c.String(http.StatusOK, "pong")
-	})
-
+	router := router.Create()
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),
-		Handler: r,
+		Handler: router,
 	}
 
 	// Initializing the server in a goroutine so that
