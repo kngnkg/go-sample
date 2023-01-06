@@ -25,6 +25,7 @@
 		"golang.go",
 		"oderwat.indent-rainbow",
 		"eamodio.gitlens",
-		"ms-vscode.makefile-tools"
+		"ms-vscode.makefile-tools",
+		"bungcip.better-toml"
 	]
   }
