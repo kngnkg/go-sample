@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kwtryo/go-sample/handler"
 )
 
 func setupRouter() *gin.Engine {
 	router := gin.Default()
-	router.GET("/ping", func(c *gin.Context) {
-		// // graceful shutdownの確認
-		// time.Sleep(5 * time.Second)
-		c.String(http.StatusOK, "pong")
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, `{"status": "ok"}`)
 	})
+	router.GET("/users", handler.GetAllUser)
 	return router
 }

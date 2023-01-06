@@ -15,24 +15,24 @@ import (
 
 // go run . {任意のポート番号}
 func main() {
-	if err := run(); err != nil {
-		log.Printf("failed to terminate server: %v", err)
-		os.Exit(1)
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatal("cannot get config")
+	}
+
+	r := setupRouter()
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Port),
+		Handler: r,
+	}
+
+	if err := run(srv); err != nil {
+		log.Fatal("Failed to terminated server: ", err)
 	}
 }
 
-func run() error {
-	cfg, err := config.New()
-	if err != nil {
-		return err
-	}
-
-	router := setupRouter()
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Port),
-		Handler: router,
-	}
-
+func run(srv *http.Server) error {
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
 	go func() {
@@ -55,11 +55,11 @@ func run() error {
 	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown: ", err)
-	}
+	// if err := srv.Shutdown(ctx); err != nil {
+	// 	log.Fatal("Server forced to shutdown: ", err)
+	// }
 
-	log.Println("Server exiting")
+	// log.Println("Server exiting")
 
-	return err
+	return srv.Shutdown(ctx)
 }
