@@ -10,5 +10,5 @@ import (
 // GET /users
 func GetAllUser(c *gin.Context) {
 	users, _ := entity.Users()
-	c.JSONP(http.StatusOK, users)
+	c.JSON(http.StatusOK, users)
 }
