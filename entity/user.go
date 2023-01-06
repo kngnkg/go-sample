@@ -4,6 +4,8 @@ type User struct {
 	Id       int
 	Name     string
 	UserName string
+	Password string
+	Role     string
 	Email    string
 	Address  string
 	Phone    string
