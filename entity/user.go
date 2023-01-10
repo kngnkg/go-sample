@@ -13,8 +13,10 @@ type User struct {
 	Company  string
 }
 
+type Users []*User
+
 // Returns all users
-func Users() (users []User, err error) {
+func AllUser() (users []User, err error) {
 	user1 := User{
 		Id:       1,
 		Name:     "Leanne Graham",

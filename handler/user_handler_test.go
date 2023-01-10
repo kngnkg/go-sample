@@ -20,3 +20,15 @@ func TestUsersRoute(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "Leanne Graham")
 }
+
+func TestRegisterUserRoute(t *testing.T) {
+	r := gin.Default()
+	r.POST("/register", RegisterUser)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/register", "リクエストボディ")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Contains(t, w.Body.String(), "登録するユーザのID")
+}

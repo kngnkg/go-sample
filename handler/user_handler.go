@@ -9,6 +9,10 @@ import (
 
 // GET /users
 func GetAllUser(c *gin.Context) {
-	users, _ := entity.Users()
+	users, _ := entity.AllUser()
 	c.JSON(http.StatusOK, users)
+}
+
+// POST /register
+func RegisterUser(c *gin.Context) {
 }
