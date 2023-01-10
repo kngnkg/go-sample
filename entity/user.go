@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 type User struct {
 	Id       int
 	Name     string
@@ -11,6 +13,8 @@ type User struct {
 	Phone    string
 	Website  string
 	Company  string
+	Created  time.Time
+	Modified time.Time
 }
 
 type Users []*User
