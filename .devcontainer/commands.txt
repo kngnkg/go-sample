@@ -23,3 +23,5 @@ $ go get github.com/stretchr/testify
 $ go get -u github.com/caarlos0/env/v6
 
 $ go install github.com/k0kubun/sqldef/cmd/mysqldef@latest
+
+$ go get -u github.com/jmoiron/sqlx
