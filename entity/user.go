@@ -3,18 +3,18 @@ package entity
 import "time"
 
 type User struct {
-	Id       int
-	Name     string
-	UserName string
-	Password string
-	Role     string
-	Email    string
-	Address  string
-	Phone    string
-	Website  string
-	Company  string
-	Created  time.Time
-	Modified time.Time
+	Id       int       `json:"id" db:"id"`
+	Name     string    `json:"name" db:"name"`
+	UserName string    `json:"username" db:"user_name"`
+	Password string    `json:"password" db:"password"`
+	Role     string    `json:"role" db:"role"`
+	Email    string    `json:"email" db:"email"`
+	Address  string    `json:"address" db:"address"`
+	Phone    string    `json:"phone" db:"phone"`
+	Website  string    `json:"website" db:"website"`
+	Company  string    `json:"company" db:"company"`
+	Created  time.Time `json:"created" db:"created"`
+	Modified time.Time `json:"modified" db:"modified"`
 }
 
 type Users []*User

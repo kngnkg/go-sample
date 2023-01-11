@@ -1,8 +1,10 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -11,10 +13,10 @@ import (
 	"github.com/kwtryo/go-sample/config"
 )
 
-func New(cfg *config.Config) (*sqlx.DB, func(), error) {
+func New(ctx context.Context, cfg *config.Config) (*sqlx.DB, func(), error) {
 	driver := "mysql"
 	db, err := sql.Open(driver, fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		"%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		cfg.DBUser,
 		cfg.DBPassword,
 		cfg.DBHost,
@@ -26,7 +28,9 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	}
 
 	// sql.Openは接続確認が行われないため、ここで確認する。
-	if err := db.Ping(); err != nil {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := db.PingContext(ctx); err != nil {
 		return nil, func() { _ = db.Close() }, err
 	}
 	xdb := sqlx.NewDb(db, driver)
@@ -34,24 +38,24 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 }
 
 type Beginner interface {
-	BeginTx(opts *sql.TxOptions) (*sql.Tx, error)
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 }
 
 type Preparer interface {
-	Preparex(query string) (*sqlx.Stmt, error)
+	PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error)
 }
 
 type Execer interface {
-	Exec(query string, args ...any) (sql.Result, error)
-	NamedExec(query string, arg interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 }
 
 type Queryer interface {
 	Preparer
-	Queryx(query string, args ...any) (*sqlx.Rows, error)
-	QueryRow(query string, args ...any) *sqlx.Row
-	Get(dest interface{}, query string, args ...any) error
-	Select(dest interface{}, query string, args ...any) error
+	QueryxContext(ctx context.Context, query string, args ...any) (*sqlx.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	GetContext(ctx context.Context, dest interface{}, query string, args ...any) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...any) error
 }
 
 var (
@@ -60,7 +64,7 @@ var (
 	_ Preparer = (*sqlx.DB)(nil)
 	_ Queryer  = (*sqlx.DB)(nil)
 	_ Execer   = (*sqlx.DB)(nil)
-	_ Execer   = (*sql.Tx)(nil)
+	_ Execer   = (*sqlx.Tx)(nil)
 )
 
 type Repository struct {
