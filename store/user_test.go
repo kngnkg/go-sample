@@ -10,8 +10,49 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRegisterUser(t *testing.T) {
+	ctx := context.Background()
+	tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
+	t.Cleanup(func() { _ = tx.Rollback() })
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM user;"); err != nil {
+		t.Logf("failed to initialize task: %v", err)
+	}
+
+	want := &entity.User{
+		Name:     "testUserFullName",
+		UserName: "testUser",
+		Password: "testPassword",
+		Role:     "admin",
+		Email:    "test@example.com",
+		Address:  "testAddress",
+		Phone:    "000-0000-0000",
+		Website:  "ttp://test.com",
+		Company:  "testCompany",
+	}
+
+	c := clock.FixedClocker{}
+	sut := &Repository{
+		Clocker: c,
+	}
+	if err := sut.RegisterUser(ctx, tx, want); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, err := sut.GetUser(ctx, tx, want.UserName)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	t.Logf("The user ID obtained is: %d", got.Id)
+
+	assert.Equal(t, want, got)
+}
+
 func TestGetUser(t *testing.T) {
-	// 作成中
 	ctx := context.Background()
 	tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
 	t.Cleanup(func() { _ = tx.Rollback() })

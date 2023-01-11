@@ -16,7 +16,11 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *entity.User
 				phone, website, company,
 				created, modified
 			)
-			VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+			VALUES (
+				?, ?, ?,
+				?, ?, ?,
+				?, ?, ?,
+				?, ?);`
 	result, err := db.ExecContext(
 		ctx, sql,
 		u.Name, u.UserName, u.Password,
