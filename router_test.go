@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,7 +10,8 @@ import (
 )
 
 func TestSetupRouter(t *testing.T) {
-	r := setupRouter()
+	ctx := context.Background()
+	r := setupRouter(ctx)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)
