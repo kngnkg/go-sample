@@ -1,7 +1,6 @@
-package main
+package router
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +9,7 @@ import (
 )
 
 // TODO: routerパッケージ
-func setupRouter(ctx context.Context, cfg *config.Config) *gin.Engine {
+func SetupRouter(cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 	// ヘルスチェック
 	router.GET("/health", func(c *gin.Context) {
