@@ -12,6 +12,7 @@ import (
 	"github.com/kwtryo/go-sample/config"
 )
 
+// TODO: runnnerパッケージ
 // go run . {任意のポート番号}
 func main() {
 	cfg, err := config.New()
@@ -23,7 +24,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	r := setupRouter(ctx)
+	r := setupRouter(ctx, cfg)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

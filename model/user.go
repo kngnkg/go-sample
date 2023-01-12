@@ -1,4 +1,4 @@
-package entity
+package model
 
 import "time"
 
@@ -18,6 +18,19 @@ type User struct {
 }
 
 type Users []*User
+
+// リクエストをバインドする構造体
+type FormRequest struct {
+	Name     string `form:"name" binding:"required"`
+	UserName string `form:"username" binding:"required"`
+	Password string `form:"password" binding:"required"`
+	Role     string `form:"role" binding:"required"`
+	Email    string `form:"email" binding:"required"`
+	Address  string `form:"address" binding:"required"`
+	Phone    string `form:"phone" binding:"required"`
+	Website  string `form:"website" binding:"required"`
+	Company  string `form:"company" binding:"required"`
+}
 
 // Returns all users
 func AllUser() (users []User, err error) {

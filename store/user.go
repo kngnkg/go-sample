@@ -3,11 +3,11 @@ package store
 import (
 	"context"
 
-	"github.com/kwtryo/go-sample/entity"
+	"github.com/kwtryo/go-sample/model"
 )
 
 // ユーザーをDBに登録する
-func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *entity.User) error {
+func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) error {
 	u.Created = r.Clocker.Now()
 	u.Modified = r.Clocker.Now()
 	sql := `INSERT INTO user (
@@ -40,8 +40,8 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *entity.User
 }
 
 // DBからユーザーを取得する
-func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (*entity.User, error) {
-	u := &entity.User{}
+func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (*model.User, error) {
+	u := &model.User{}
 	sql := `SELECT
 				id, name, user_name,
 				password, role, email,

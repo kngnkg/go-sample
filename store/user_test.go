@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/entity"
+	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/testutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +22,7 @@ func TestRegisterUser(t *testing.T) {
 		t.Logf("failed to initialize task: %v", err)
 	}
 
-	want := &entity.User{
+	want := &model.User{
 		Name:     "testUserFullName",
 		UserName: "testUser",
 		Password: "testPassword",
@@ -71,13 +71,13 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func prepareUser(ctx context.Context, t *testing.T, con Execer) *entity.User {
+func prepareUser(ctx context.Context, t *testing.T, con Execer) *model.User {
 	t.Helper()
 	if _, err := con.ExecContext(ctx, "DELETE FROM user;"); err != nil {
 		t.Logf("failed to initialize task: %v", err)
 	}
 	c := clock.FixedClocker{}
-	want := &entity.User{
+	want := &model.User{
 		Name:     "testUserFullName",
 		UserName: "testUser",
 		Password: "testPassword",
