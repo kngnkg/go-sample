@@ -28,16 +28,14 @@ func TestRun(t *testing.T) {
 	})
 
 	eg.Go(func() error {
-		err := Run(ctx, router, cfg)
-		return err
+		return Run(ctx, router, cfg)
 	})
+	// サーバーの起動を待つため3秒休む
+	time.Sleep(3 * time.Second)
 
-	// どんなポート番号でリッスンしているのか確認
 	url := fmt.Sprintf("http://localhost:%d/ping", cfg.Port)
 	t.Logf("try request to %q", url)
 
-	// サーバーの起動を待つため3秒休む
-	time.Sleep(3 * time.Second)
 	rsp, err := http.Get(url)
 	if err != nil {
 		t.Errorf("failed to get: %+v", err)

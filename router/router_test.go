@@ -9,6 +9,7 @@ import (
 )
 
 func TestSetupRouter(t *testing.T) {
+	// テスト用のconfigの設定を作る
 	r := SetupRouter()
 
 	w := httptest.NewRecorder()

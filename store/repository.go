@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -13,7 +12,7 @@ import (
 	"github.com/kwtryo/go-sample/config"
 )
 
-func New(ctx context.Context, cfg *config.Config) (*sqlx.DB, func(), error) {
+func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	driver := "mysql"
 	db, err := sql.Open(driver, fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?parseTime=true",
@@ -28,9 +27,12 @@ func New(ctx context.Context, cfg *config.Config) (*sqlx.DB, func(), error) {
 	}
 
 	// sql.Openは接続確認が行われないため、ここで確認する。
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	if err := db.PingContext(ctx); err != nil {
+	// ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	// defer cancel()
+	// if err := db.PingContext(ctx); err != nil {
+	// 	return nil, func() { _ = db.Close() }, err
+	// }
+	if err := db.Ping(); err != nil {
 		return nil, func() { _ = db.Close() }, err
 	}
 	xdb := sqlx.NewDb(db, driver)

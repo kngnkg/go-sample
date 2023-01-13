@@ -15,16 +15,18 @@ func GetAllUser(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-type RegisterUser struct {
+//	type RegisterUser struct {
+//		DB   *sqlx.DB
+//		Repo *store.Repository
+//	}
+type UserHandler struct {
 	DB   *sqlx.DB
 	Repo *store.Repository
 }
 
 // POST /register
 // ユーザーを登録し、登録したユーザーのIDをレスポンスとして返す
-func (ru *RegisterUser) ServeHTTP(c *gin.Context) {
-	ctx := c.Request.Context()
-
+func (uh *UserHandler) RegisterUser(c *gin.Context) {
 	form := &model.FormRequest{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
@@ -43,7 +45,7 @@ func (ru *RegisterUser) ServeHTTP(c *gin.Context) {
 		Website:  form.Website,
 		Company:  form.Company,
 	}
-	err := ru.Repo.RegisterUser(ctx, ru.DB, u)
+	err := uh.Repo.RegisterUser(c.Request.Context(), uh.DB, u)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 		c.Abort()

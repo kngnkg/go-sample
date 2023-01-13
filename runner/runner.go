@@ -11,26 +11,29 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/config"
+	"golang.org/x/sync/errgroup"
 )
 
 func Run(ctx context.Context, r *gin.Engine, cfg *config.Config) error {
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	eg, ctx := errgroup.WithContext(ctx)
 
 	srv := &http.Server{
-		// Addr: fmt.Sprintf(":%d", cfg.Port),
-		Addr:    fmt.Sprintf("0.0.0.0:%d", cfg.Port),
+		Addr:    fmt.Sprintf(":%d", cfg.Port),
 		Handler: r,
 	}
 
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
-	go func() {
+	eg.Go(func() error {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			log.Printf("failed to close: %+v", err)
+			return err
 		}
-	}()
+		return nil
+	})
 
 	// Listen for the interrupt signal.
 	<-ctx.Done()
@@ -44,10 +47,11 @@ func Run(ctx context.Context, r *gin.Engine, cfg *config.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		// log.Fatal("Server forced to shutdown: ", err)
+		log.Printf("failed to shutdown: %+v", err)
 		return err
 	}
 
-	log.Println("Server exiting")
-	return nil
+	// log.Println("Server exiting")
+	// グレースフルシャットダウンの終了を待つ。
+	return eg.Wait()
 }
