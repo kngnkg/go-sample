@@ -1,6 +1,8 @@
 package config
 
-import "github.com/caarlos0/env/v6"
+import (
+	"github.com/caarlos0/env/v6"
+)
 
 type Config struct {
 	Env        string `env:"TODO_ENV" envDefault:"dev"`
@@ -17,5 +19,15 @@ func New() (*Config, error) {
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
 	}
+	return cfg, nil
+}
+
+// テスト用のconfigを返す
+func CreateForTest() (*Config, error) {
+	cfg := &Config{}
+	if err := env.Parse(cfg); err != nil {
+		return nil, err
+	}
+	cfg.Port = 8081
 	return cfg, nil
 }

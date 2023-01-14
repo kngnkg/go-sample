@@ -11,11 +11,16 @@ import (
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
-	clocker := clock.RealClocker{}
-	r := store.Repository{Clocker: clocker}
+	// TODO: database.init()に分離したい
 	db, cleanup, err := store.New(cfg)
 	if err != nil {
 		return nil, cleanup, err
+	}
+	r := &store.Repository{Clocker: clock.RealClocker{}}
+
+	userHandler := &handler.UserHandler{
+		DB:   db,
+		Repo: r,
 	}
 
 	router := gin.Default()
@@ -23,15 +28,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
-
-	// テスト用
-	router.GET("/users", handler.GetAllUser)
-
-	// ru := &handler.RegisterUser{
-	// 	DB:   db,
-	// 	Repo: &r,
-	// }
-	// router.POST("/register", ru.ServeHTTP)
+	router.POST("/register", userHandler.RegisterUser)
 
 	return router, cleanup, nil
 }

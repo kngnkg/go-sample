@@ -54,3 +54,12 @@ func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (
 	}
 	return u, nil
 }
+
+// DBのユーザーを全て削除する
+func (r *Repository) DeleteUserAll(ctx context.Context, db Execer) error {
+	sql := `DELETE FROM user;`
+	if _, err := db.ExecContext(ctx, sql); err != nil {
+		return err
+	}
+	return nil
+}

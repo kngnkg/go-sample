@@ -4,23 +4,45 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRegisterUser(t *testing.T) {
+type userStoreTest struct {
+	ctx  context.Context
+	tx   *sqlx.Tx
+	repo *Repository
+}
+
+func prepareTest(t *testing.T) *userStoreTest {
+	t.Helper()
+
 	ctx := context.Background()
 	tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
 	t.Cleanup(func() { _ = tx.Rollback() })
 	if err != nil {
 		t.Fatal(err)
 	}
+	repo := &Repository{
+		Clocker: clock.FixedClocker{},
+	}
 
-	if _, err := tx.ExecContext(ctx, "DELETE FROM user;"); err != nil {
+	ust := &userStoreTest{
+		ctx:  ctx,
+		tx:   tx,
+		repo: repo,
+	}
+	if err := ust.repo.DeleteUserAll(ust.ctx, ust.tx); err != nil {
 		t.Logf("failed to initialize task: %v", err)
 	}
+	return ust
+}
+
+func TestRegisterUser(t *testing.T) {
+	ust := prepareTest(t)
 
 	want := &model.User{
 		Name:     "testUserFullName",
@@ -33,16 +55,11 @@ func TestRegisterUser(t *testing.T) {
 		Website:  "ttp://test.com",
 		Company:  "testCompany",
 	}
-
-	c := clock.FixedClocker{}
-	sut := &Repository{
-		Clocker: c,
-	}
-	if err := sut.RegisterUser(ctx, tx, want); err != nil {
+	if err := ust.repo.RegisterUser(ust.ctx, ust.tx, want); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	got, err := sut.GetUser(ctx, tx, want.UserName)
+	got, err := ust.repo.GetUser(ust.ctx, ust.tx, want.UserName)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -53,17 +70,10 @@ func TestRegisterUser(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	ctx := context.Background()
-	tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
-	t.Cleanup(func() { _ = tx.Rollback() })
-	if err != nil {
-		t.Fatal(err)
-	}
+	ust := prepareTest(t)
 
-	want := prepareUser(ctx, t, tx)
-
-	sut := &Repository{}
-	got, err := sut.GetUser(ctx, tx, want.UserName)
+	want := prepareUser(ust.ctx, t, ust.tx)
+	got, err := ust.repo.GetUser(ust.ctx, ust.tx, want.UserName)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -73,9 +83,7 @@ func TestGetUser(t *testing.T) {
 
 func prepareUser(ctx context.Context, t *testing.T, con Execer) *model.User {
 	t.Helper()
-	if _, err := con.ExecContext(ctx, "DELETE FROM user;"); err != nil {
-		t.Logf("failed to initialize task: %v", err)
-	}
+
 	c := clock.FixedClocker{}
 	want := &model.User{
 		Name:     "testUserFullName",

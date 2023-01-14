@@ -9,16 +9,6 @@ import (
 	"github.com/kwtryo/go-sample/store"
 )
 
-// GET /users
-func GetAllUser(c *gin.Context) {
-	users, _ := model.AllUser()
-	c.JSON(http.StatusOK, users)
-}
-
-//	type RegisterUser struct {
-//		DB   *sqlx.DB
-//		Repo *store.Repository
-//	}
 type UserHandler struct {
 	DB   *sqlx.DB
 	Repo *store.Repository
