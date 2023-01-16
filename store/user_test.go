@@ -55,7 +55,8 @@ func TestRegisterUser(t *testing.T) {
 		Website:  "ttp://test.com",
 		Company:  "testCompany",
 	}
-	if err := ust.repo.RegisterUser(ust.ctx, ust.tx, want); err != nil {
+	registeredUser, err := ust.repo.RegisterUser(ust.ctx, ust.tx, want)
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -66,7 +67,7 @@ func TestRegisterUser(t *testing.T) {
 
 	t.Logf("The user ID obtained is: %d", got.Id)
 
-	assert.Equal(t, want, got)
+	assert.Equal(t, registeredUser, got)
 }
 
 func TestGetUser(t *testing.T) {

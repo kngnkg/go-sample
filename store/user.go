@@ -6,8 +6,8 @@ import (
 	"github.com/kwtryo/go-sample/model"
 )
 
-// ユーザーをDBに登録する
-func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) error {
+// ユーザーをDBに登録する。
+func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) (*model.User, error) {
 	u.Created = r.Clocker.Now()
 	u.Modified = r.Clocker.Now()
 	sql := `INSERT INTO user (
@@ -29,14 +29,14 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User)
 		u.Created, u.Modified,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	id, err := result.LastInsertId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	u.Id = int(id)
-	return nil
+	return u, nil
 }
 
 // DBからユーザーを取得する

@@ -5,6 +5,7 @@ package handler
 
 import (
 	"context"
+	"github.com/kwtryo/go-sample/model"
 	"sync"
 )
 
@@ -18,7 +19,7 @@ var _ UserService = &UserServiceMock{}
 //
 //		// make and configure a mocked UserService
 //		mockedUserService := &UserServiceMock{
-//			RegisterUserFunc: func(ctx context.Context) (int, error) {
+//			RegisterUserFunc: func(ctx context.Context, form *model.FormRequest) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
 //		}
@@ -29,7 +30,7 @@ var _ UserService = &UserServiceMock{}
 //	}
 type UserServiceMock struct {
 	// RegisterUserFunc mocks the RegisterUser method.
-	RegisterUserFunc func(ctx context.Context) (int, error)
+	RegisterUserFunc func(ctx context.Context, form *model.FormRequest) (*model.User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -37,25 +38,29 @@ type UserServiceMock struct {
 		RegisterUser []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// Form is the form argument value.
+			Form *model.FormRequest
 		}
 	}
 	lockRegisterUser sync.RWMutex
 }
 
 // RegisterUser calls RegisterUserFunc.
-func (mock *UserServiceMock) RegisterUser(ctx context.Context) (int, error) {
+func (mock *UserServiceMock) RegisterUser(ctx context.Context, form *model.FormRequest) (*model.User, error) {
 	if mock.RegisterUserFunc == nil {
 		panic("UserServiceMock.RegisterUserFunc: method is nil but UserService.RegisterUser was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx  context.Context
+		Form *model.FormRequest
 	}{
-		Ctx: ctx,
+		Ctx:  ctx,
+		Form: form,
 	}
 	mock.lockRegisterUser.Lock()
 	mock.calls.RegisterUser = append(mock.calls.RegisterUser, callInfo)
 	mock.lockRegisterUser.Unlock()
-	return mock.RegisterUserFunc(ctx)
+	return mock.RegisterUserFunc(ctx, form)
 }
 
 // RegisterUserCalls gets all the calls that were made to RegisterUser.
@@ -63,10 +68,12 @@ func (mock *UserServiceMock) RegisterUser(ctx context.Context) (int, error) {
 //
 //	len(mockedUserService.RegisterUserCalls())
 func (mock *UserServiceMock) RegisterUserCalls() []struct {
-	Ctx context.Context
+	Ctx  context.Context
+	Form *model.FormRequest
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx  context.Context
+		Form *model.FormRequest
 	}
 	mock.lockRegisterUser.RLock()
 	calls = mock.calls.RegisterUser

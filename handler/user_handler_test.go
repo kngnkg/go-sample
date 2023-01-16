@@ -18,7 +18,6 @@ type userHandlerTest struct {
 	c      *gin.Context
 	router *gin.Engine
 	rec    *httptest.ResponseRecorder
-	// handler *UserHandler
 }
 
 // userHandlerTest構造体を初期化する
@@ -28,22 +27,15 @@ func prepareTest(t *testing.T) *userHandlerTest {
 	router := gin.Default()
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
-	// db := testutil.OpenDbForTest(t)
-	// repo := &store.Repository{Clocker: clock.FixedClocker{}}
 
-	uht := &userHandlerTest{
+	return &userHandlerTest{
 		c:      c,
 		router: router,
 		rec:    rec,
-		// handler: &UserHandler{
-		// 	DB:   db,
-		// 	Repo: repo,
-		// },
 	}
-	// uht.handler.Repo.DeleteUserAll(c, db)
-	return uht
 }
 
+// TODO:ゴールデンテストにする
 func TestRegisterUserRoute(t *testing.T) {
 	type want struct {
 		status int
@@ -51,6 +43,7 @@ func TestRegisterUserRoute(t *testing.T) {
 	}
 
 	type test struct {
+		user *model.User
 		body *strings.Reader
 		want want
 	}
@@ -58,6 +51,7 @@ func TestRegisterUserRoute(t *testing.T) {
 	tests := map[string]test{
 		// 正常系
 		"ok": {
+			user: getTestUser(),
 			body: validBody(),
 			want: want{
 				status: http.StatusOK,
@@ -66,6 +60,7 @@ func TestRegisterUserRoute(t *testing.T) {
 		},
 		// 異常系
 		"badRequest": {
+			user: getTestUser(),
 			body: invalidBody(),
 			want: want{
 				status: http.StatusBadRequest,
@@ -74,6 +69,7 @@ func TestRegisterUserRoute(t *testing.T) {
 		},
 	}
 
+	// 正常系、異常系のテストを並行実行する
 	for n, tst := range tests {
 		t.Run(n, func(t *testing.T) {
 			tst := tst
@@ -81,11 +77,11 @@ func TestRegisterUserRoute(t *testing.T) {
 
 			uht := prepareTest(t)
 			mockedUserService := &UserServiceMock{}
-			mockedUserService.RegisterUserFunc = func(ctx context.Context) (int, error) {
+			mockedUserService.RegisterUserFunc = func(ctx context.Context, form *model.FormRequest) (*model.User, error) {
 				if tst.want.status == http.StatusOK {
-					return 1, nil
+					return tst.user, nil
 				}
-				return 0, errors.New("error from mock")
+				return nil, errors.New("error from mock")
 			}
 			handler := &UserHandler{
 				Service: mockedUserService,
@@ -102,9 +98,9 @@ func TestRegisterUserRoute(t *testing.T) {
 	}
 }
 
-func validBody() *strings.Reader {
-	// テスト用ユーザー
-	u := &model.User{
+// テスト用ユーザー
+func getTestUser() *model.User {
+	return &model.User{
 		Name:     "testUserFullName",
 		UserName: "testUser",
 		Password: "testPassword",
@@ -115,6 +111,11 @@ func validBody() *strings.Reader {
 		Website:  "ttp://test.com",
 		Company:  "testCompany",
 	}
+}
+
+func validBody() *strings.Reader {
+	u := getTestUser()
+
 	// リクエストを作成
 	form := url.Values{}
 	form.Add("name", u.Name)
@@ -129,21 +130,13 @@ func validBody() *strings.Reader {
 	body := strings.NewReader(form.Encode())
 	return body
 }
+
 func invalidBody() *strings.Reader {
-	// テスト用ユーザー
-	u := &model.User{
-		// Name:     "testUserFullName",
-		UserName: "testUser",
-		Password: "testPassword",
-		Role:     "admin",
-		Email:    "test@example.com",
-		Address:  "testAddress",
-		Phone:    "000-0000-0000",
-		Website:  "ttp://test.com",
-		Company:  "testCompany",
-	}
+	u := getTestUser()
+
 	// リクエストを作成
 	form := url.Values{}
+	// nameを設定しない
 	// form.Add("name", u.Name)
 	form.Add("username", u.UserName)
 	form.Add("password", u.Password)
