@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -10,6 +11,15 @@ import (
 
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/config"
+)
+
+const (
+	// MySQLの重複エラーコード
+	ErrCodeMySQLDuplicateEntry = 1062
+)
+
+var (
+	ErrAlreadyEntry = errors.New("duplicate entry")
 )
 
 func New(cfg *config.Config) (*sqlx.DB, func(), error) {

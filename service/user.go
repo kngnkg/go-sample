@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/store"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository interface {
@@ -20,10 +21,16 @@ type UserService struct {
 
 // ユーザーを登録し、登録したユーザーを返す
 func (us *UserService) RegisterUser(ctx context.Context, form *model.FormRequest) (*model.User, error) {
+	// パスワードをbcryptでハッシュ化
+	pw, err := bcrypt.GenerateFromPassword([]byte(form.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
 	u := &model.User{
 		Name:     form.Name,
 		UserName: form.UserName,
-		Password: form.Password,
+		Password: string(pw),
 		Role:     form.Role,
 		Email:    form.Email,
 		Address:  form.Address,

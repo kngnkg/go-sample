@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -41,33 +42,64 @@ func prepareTest(t *testing.T) *userStoreTest {
 	return ust
 }
 
+// TODO: 異常系もかく
 func TestRegisterUser(t *testing.T) {
-	ust := prepareTest(t)
-
-	want := &model.User{
-		Name:     "testUserFullName",
-		UserName: "testUser",
-		Password: "testPassword",
-		Role:     "admin",
-		Email:    "test@example.com",
-		Address:  "testAddress",
-		Phone:    "000-0000-0000",
-		Website:  "ttp://test.com",
-		Company:  "testCompany",
+	type want struct {
+		err error
 	}
-	registeredUser, err := ust.repo.RegisterUser(ust.ctx, ust.tx, want)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	type test struct {
+		// 登録するユーザー
+		user *model.User
+		want want
 	}
 
-	got, err := ust.repo.GetUser(ust.ctx, ust.tx, want.UserName)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	tests := map[string]test{
+		// 正常系
+		"ok": {
+			user: getTestUser(),
+			want: want{
+				err: nil,
+			},
+		},
+		// 既に登録されていた場合
+		"errAlreadyEntry": {
+			user: getTestUser(),
+			want: want{
+				err: fmt.Errorf("cannot create same name user: %w", ErrAlreadyEntry),
+			},
+		},
 	}
 
-	t.Logf("The user ID obtained is: %d", got.Id)
+	for n, tst := range tests {
+		t.Run(n, func(t *testing.T) {
+			tstName := n
+			tst := tst
+			t.Parallel()
 
-	assert.Equal(t, registeredUser, got)
+			ust := prepareTest(t)
+
+			registeredUser, err := ust.repo.RegisterUser(ust.ctx, ust.tx, tst.user)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if tstName == "errAlreadyEntry" {
+				// 異常系のテストの場合のみ再度登録する
+				_, err = ust.repo.RegisterUser(ust.ctx, ust.tx, tst.user)
+				assert.Equal(t, tst.want.err, err)
+			} else {
+				// 正常系
+				got, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.user.UserName)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+
+				t.Logf("The user ID obtained is: %d", got.Id)
+
+				assert.Equal(t, registeredUser, got)
+			}
+		})
+	}
 }
 
 func TestGetUser(t *testing.T) {
@@ -82,23 +114,30 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func prepareUser(ctx context.Context, t *testing.T, con Execer) *model.User {
-	t.Helper()
-
-	c := clock.FixedClocker{}
-	want := &model.User{
+// テストに使用するユーザーを返す
+func getTestUser() *model.User {
+	return &model.User{
 		Name:     "testUserFullName",
 		UserName: "testUser",
-		Password: "testPassword",
+		Password: "hashedTestPassword",
 		Role:     "admin",
 		Email:    "test@example.com",
 		Address:  "testAddress",
 		Phone:    "000-0000-0000",
 		Website:  "ttp://test.com",
 		Company:  "testCompany",
-		Created:  c.Now(),
-		Modified: c.Now(),
 	}
+}
+
+func prepareUser(ctx context.Context, t *testing.T, con Execer) *model.User {
+	t.Helper()
+
+	c := clock.FixedClocker{}
+	want := getTestUser()
+	now := c.Now()
+	want.Created = now
+	want.Modified = now
+
 	result, err := con.ExecContext(
 		ctx,
 		`INSERT INTO user (

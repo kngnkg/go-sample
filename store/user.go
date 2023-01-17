@@ -2,11 +2,14 @@ package store
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/kwtryo/go-sample/model"
 )
 
-// ユーザーをDBに登録する。
+// ユーザーをDBに登録し、登録したユーザーを返す。
 func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) (*model.User, error) {
 	u.Created = r.Clocker.Now()
 	u.Modified = r.Clocker.Now()
@@ -29,6 +32,11 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User)
 		u.Created, u.Modified,
 	)
 	if err != nil {
+		var mysqlError *mysql.MySQLError
+		if errors.As(err, &mysqlError) && mysqlError.Number == ErrCodeMySQLDuplicateEntry {
+			err = fmt.Errorf("cannot create same name user: %w", ErrAlreadyEntry)
+			return nil, err
+		}
 		return nil, err
 	}
 	id, err := result.LastInsertId()
@@ -39,7 +47,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User)
 	return u, nil
 }
 
-// DBからユーザーを取得する
+// ユーザーネームからユーザーを取得する。
 func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (*model.User, error) {
 	u := &model.User{}
 	sql := `SELECT
