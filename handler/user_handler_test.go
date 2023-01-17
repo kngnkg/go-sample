@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/model"
+	"github.com/kwtryo/go-sample/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,30 +42,30 @@ func TestRegisterUserRoute(t *testing.T) {
 		status int
 		body   *strings.Reader
 	}
-
 	type test struct {
 		user *model.User
 		body *strings.Reader
 		want want
 	}
 
+	testUser := testutil.GetTestUser(t)
 	tests := map[string]test{
 		// 正常系
 		"ok": {
-			user: getTestUser(),
-			body: validBody(),
+			user: testUser,
+			body: validBody(t),
 			want: want{
 				status: http.StatusOK,
-				body:   validBody(),
+				body:   validBody(t),
 			},
 		},
 		// 異常系
 		"badRequest": {
-			user: getTestUser(),
-			body: invalidBody(),
+			user: testUser,
+			body: invalidBody(t),
 			want: want{
 				status: http.StatusBadRequest,
-				body:   invalidBody(),
+				body:   invalidBody(t),
 			},
 		},
 	}
@@ -98,23 +99,8 @@ func TestRegisterUserRoute(t *testing.T) {
 	}
 }
 
-// テスト用ユーザー
-func getTestUser() *model.User {
-	return &model.User{
-		Name:     "testUserFullName",
-		UserName: "testUser",
-		Password: "testPassword",
-		Role:     "admin",
-		Email:    "test@example.com",
-		Address:  "testAddress",
-		Phone:    "000-0000-0000",
-		Website:  "ttp://test.com",
-		Company:  "testCompany",
-	}
-}
-
-func validBody() *strings.Reader {
-	u := getTestUser()
+func validBody(t *testing.T) *strings.Reader {
+	u := testutil.GetTestUser(t)
 
 	// リクエストを作成
 	form := url.Values{}
@@ -131,8 +117,8 @@ func validBody() *strings.Reader {
 	return body
 }
 
-func invalidBody() *strings.Reader {
-	u := getTestUser()
+func invalidBody(t *testing.T) *strings.Reader {
+	u := testutil.GetTestUser(t)
 
 	// リクエストを作成
 	form := url.Values{}
