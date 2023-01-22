@@ -17,6 +17,7 @@ services:
       - .:/app
     ports:
       - "18000:8080"
+    command: sleep infinity
   todo-db:
     container_name: todo-db
     image: mysql:8.0.29
