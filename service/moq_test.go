@@ -20,10 +20,10 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //		// make and configure a mocked UserRepository
 //		mockedUserRepository := &UserRepositoryMock{
-//			GetUserFunc: func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
+//			GetUserFunc: func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
 //				panic("mock out the GetUser method")
 //			},
-//			RegisterUserFunc: func(ctx context.Context, db store.Execer, u *model.User) (*model.User, error) {
+//			RegisterUserFunc: func(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
 //		}
@@ -34,10 +34,10 @@ var _ UserRepository = &UserRepositoryMock{}
 //	}
 type UserRepositoryMock struct {
 	// GetUserFunc mocks the GetUser method.
-	GetUserFunc func(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
+	GetUserFunc func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
 
 	// RegisterUserFunc mocks the RegisterUser method.
-	RegisterUserFunc func(ctx context.Context, db store.Execer, u *model.User) (*model.User, error)
+	RegisterUserFunc func(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -46,7 +46,7 @@ type UserRepositoryMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
-			Db store.Queryer
+			Db store.DBConnection
 			// UserName is the userName argument value.
 			UserName string
 		}
@@ -55,7 +55,7 @@ type UserRepositoryMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
-			Db store.Execer
+			Db store.DBConnection
 			// U is the u argument value.
 			U *model.User
 		}
@@ -65,13 +65,13 @@ type UserRepositoryMock struct {
 }
 
 // GetUser calls GetUserFunc.
-func (mock *UserRepositoryMock) GetUser(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
+func (mock *UserRepositoryMock) GetUser(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
 	if mock.GetUserFunc == nil {
 		panic("UserRepositoryMock.GetUserFunc: method is nil but UserRepository.GetUser was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
-		Db       store.Queryer
+		Db       store.DBConnection
 		UserName string
 	}{
 		Ctx:      ctx,
@@ -90,12 +90,12 @@ func (mock *UserRepositoryMock) GetUser(ctx context.Context, db store.Queryer, u
 //	len(mockedUserRepository.GetUserCalls())
 func (mock *UserRepositoryMock) GetUserCalls() []struct {
 	Ctx      context.Context
-	Db       store.Queryer
+	Db       store.DBConnection
 	UserName string
 } {
 	var calls []struct {
 		Ctx      context.Context
-		Db       store.Queryer
+		Db       store.DBConnection
 		UserName string
 	}
 	mock.lockGetUser.RLock()
@@ -105,13 +105,13 @@ func (mock *UserRepositoryMock) GetUserCalls() []struct {
 }
 
 // RegisterUser calls RegisterUserFunc.
-func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.Execer, u *model.User) (*model.User, error) {
+func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error) {
 	if mock.RegisterUserFunc == nil {
 		panic("UserRepositoryMock.RegisterUserFunc: method is nil but UserRepository.RegisterUser was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Db  store.Execer
+		Db  store.DBConnection
 		U   *model.User
 	}{
 		Ctx: ctx,
@@ -130,12 +130,12 @@ func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.Exece
 //	len(mockedUserRepository.RegisterUserCalls())
 func (mock *UserRepositoryMock) RegisterUserCalls() []struct {
 	Ctx context.Context
-	Db  store.Execer
+	Db  store.DBConnection
 	U   *model.User
 } {
 	var calls []struct {
 		Ctx context.Context
-		Db  store.Execer
+		Db  store.DBConnection
 		U   *model.User
 	}
 	mock.lockRegisterUser.RLock()

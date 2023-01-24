@@ -34,10 +34,10 @@ func TestRegisterUser(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			t.Parallel()
 
-			moqDb := &ExecerMock{}
+			moqDb := &DBConnectionMock{}
 			moqRepo := &UserRepositoryMock{}
 			moqRepo.RegisterUserFunc =
-				func(ctx context.Context, db store.Execer, u *model.User) (*model.User, error) {
+				func(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error) {
 					return u, nil
 				}
 

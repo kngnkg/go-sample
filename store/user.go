@@ -10,20 +10,16 @@ import (
 )
 
 // ユーザーをDBに登録し、登録したユーザーを返す。
-func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) (*model.User, error) {
+func (r *Repository) RegisterUser(ctx context.Context, db DBConnection, u *model.User) (*model.User, error) {
 	u.Created = r.Clocker.Now()
 	u.Modified = r.Clocker.Now()
 	sql := `INSERT INTO user (
-				name, user_name, password,
-				role, email, address,
-				phone, website, company,
-				created, modified
+				name, user_name, password, role, email, address,
+				phone, website, company, created, modified
 			)
 			VALUES (
-				?, ?, ?,
-				?, ?, ?,
-				?, ?, ?,
-				?, ?);`
+				?, ?, ?, ?, ?, ?,
+				?, ?, ?, ?, ?);`
 	result, err := db.ExecContext(
 		ctx, sql,
 		u.Name, u.UserName, u.Password,
@@ -48,7 +44,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User)
 }
 
 // ユーザーネームからユーザーを取得する。
-func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (*model.User, error) {
+func (r *Repository) GetUser(ctx context.Context, db DBConnection, userName string) (*model.User, error) {
 	u := &model.User{}
 	sql := `SELECT
 				id, name, user_name,
@@ -64,7 +60,7 @@ func (r *Repository) GetUser(ctx context.Context, db Queryer, userName string) (
 }
 
 // DBのユーザーを全て削除する
-func (r *Repository) DeleteUserAll(ctx context.Context, db Execer) error {
+func (r *Repository) DeleteUserAll(ctx context.Context, db DBConnection) error {
 	sql := `DELETE FROM user;`
 	if _, err := db.ExecContext(ctx, sql); err != nil {
 		return err

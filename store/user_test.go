@@ -129,7 +129,7 @@ func getTestUser() *model.User {
 	}
 }
 
-func prepareUser(ctx context.Context, t *testing.T, con Execer) *model.User {
+func prepareUser(ctx context.Context, t *testing.T, con DBConnection) *model.User {
 	t.Helper()
 
 	c := clock.FixedClocker{}

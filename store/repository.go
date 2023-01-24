@@ -22,6 +22,10 @@ var (
 	ErrAlreadyEntry = errors.New("duplicate entry")
 )
 
+type Repository struct {
+	Clocker clock.Clocker
+}
+
 func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	driver := "mysql"
 	db, err := sql.Open(driver, fmt.Sprintf(
@@ -44,21 +48,10 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	return xdb, func() { _ = db.Close() }, nil
 }
 
-type Beginner interface {
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
-}
-
-type Preparer interface {
+type DBConnection interface {
 	PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error)
-}
-
-type Execer interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-}
-
-type Queryer interface {
-	Preparer
 	QueryxContext(ctx context.Context, query string, args ...any) (*sqlx.Rows, error)
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 	GetContext(ctx context.Context, dest interface{}, query string, args ...any) error
@@ -66,14 +59,6 @@ type Queryer interface {
 }
 
 var (
-	// インタフェースが期待通りに宣言されているか確認
-	_ Beginner = (*sqlx.DB)(nil)
-	_ Preparer = (*sqlx.DB)(nil)
-	_ Queryer  = (*sqlx.DB)(nil)
-	_ Execer   = (*sqlx.DB)(nil)
-	_ Execer   = (*sqlx.Tx)(nil)
+	_ DBConnection = (*sqlx.DB)(nil)
+	_ DBConnection = (*sqlx.Tx)(nil)
 )
-
-type Repository struct {
-	Clocker clock.Clocker
-}
