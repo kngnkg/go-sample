@@ -74,7 +74,8 @@ func TestRegisterUser(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			tstName := n
 			tst := tst
-			t.Parallel()
+			// CIワークフローでデッドロックが起こるので、暫定策としてコメントアウト
+			// t.Parallel()
 
 			ust := prepareTest(t)
 
