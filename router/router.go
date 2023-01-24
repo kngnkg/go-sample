@@ -7,7 +7,6 @@ import (
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/config"
 	"github.com/kwtryo/go-sample/handler"
-	"github.com/kwtryo/go-sample/middleware"
 	"github.com/kwtryo/go-sample/service"
 	"github.com/kwtryo/go-sample/store"
 )
@@ -24,7 +23,6 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	}
 
 	router := gin.Default()
-	router.Use(middleware.DBTransactionMiddleware(db))
 
 	// ヘルスチェック
 	router.GET("/health", func(c *gin.Context) {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -13,12 +14,12 @@ import (
 func OpenDbForTest(t *testing.T) *sqlx.DB {
 	t.Helper()
 
-	// address := "docker.for.mac.localhost"
-	// port := 33306
-	// if _, defined := os.LookupEnv("CI"); defined {
-	// 	address = "127.0.0.1"
-	// 	port = 3306
-	// }
+	address := "docker.for.mac.localhost"
+	port := 33306
+	if _, defined := os.LookupEnv("CI"); defined {
+		address = "127.0.0.1"
+		port = 3306
+	}
 
 	cfg, err := config.CreateForTest()
 	if err != nil {
@@ -30,8 +31,8 @@ func OpenDbForTest(t *testing.T) *sqlx.DB {
 		"%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		cfg.DBUser,
 		cfg.DBPassword,
-		cfg.DBHost,
-		cfg.DBPort,
+		address,
+		port,
 		cfg.DBName,
 	))
 	if err != nil {
