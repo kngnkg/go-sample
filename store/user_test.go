@@ -42,7 +42,6 @@ func prepareTest(t *testing.T) *userStoreTest {
 	return ust
 }
 
-// TODO: 異常系もかく
 func TestRegisterUser(t *testing.T) {
 	type want struct {
 		err error
