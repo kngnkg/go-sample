@@ -59,7 +59,7 @@ func TestRegisterUserRoute(t *testing.T) {
 				body:   validBody(t),
 			},
 		},
-		// 異常系
+		// リクエストが不正な場合
 		"badRequest": {
 			user: testUser,
 			body: invalidBody(t),
@@ -134,4 +134,64 @@ func invalidBody(t *testing.T) *strings.Reader {
 	form.Add("company", u.Company)
 	body := strings.NewReader(form.Encode())
 	return body
+}
+
+func TestGetUserRoute(t *testing.T) {
+	type want struct {
+		status int
+		body   *strings.Reader
+	}
+	type test struct {
+		queryParam string
+		want       want
+	}
+
+	tests := map[string]test{
+		// 正常系
+		"ok": {
+			queryParam: "testUser",
+			want: want{
+				status: http.StatusOK,
+				body:   validBody(t),
+			},
+		},
+		// 見つからない場合
+		"notFound": {
+			queryParam: "testInvalidUser",
+			want: want{
+				status: http.StatusInternalServerError,
+				body:   invalidBody(t),
+			},
+		},
+	}
+
+	// 正常系、異常系のテストを並行実行する
+	for n, tst := range tests {
+		t.Run(n, func(t *testing.T) {
+			tst := tst
+			t.Parallel()
+
+			uht := prepareTest(t)
+			mockedUserService := &UserServiceMock{}
+			mockedUserService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
+				if tst.want.status == http.StatusOK {
+					// idを振る
+					user := testutil.GetTestUser(t)
+					return user, nil
+				}
+				return nil, errors.New("error from mock")
+			}
+			handler := &UserHandler{
+				Service: mockedUserService,
+			}
+			uht.router.GET("/user", handler.GetUser)
+
+			str := "/user?user_name=" + tst.queryParam
+			uht.c.Request = httptest.NewRequest("GET", str, nil)
+			handler.GetUser(uht.c)
+
+			// 期待するステータスコードと一致するか確認する
+			assert.Equal(t, tst.want.status, uht.rec.Code)
+		})
+	}
 }
