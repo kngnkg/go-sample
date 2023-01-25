@@ -7,6 +7,7 @@ import (
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/store"
 	"github.com/kwtryo/go-sample/testutil"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -53,6 +54,52 @@ func TestRegisterUser(t *testing.T) {
 			if err := bcrypt.CompareHashAndPassword([]byte(got.Password), []byte(tst.want.user.Password)); err != nil {
 				t.Fatalf("password is wrong: %v", err)
 			}
+		})
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	type want struct {
+		user *model.User
+	}
+	type test struct {
+		userName string
+		want     want
+	}
+
+	testUser := testutil.GetTestUser(t)
+	tests := map[string]test{
+		// 正常系
+		"ok": {
+			userName: "testUser",
+			want: want{
+				user: testUser,
+			},
+		},
+	}
+
+	for n, tst := range tests {
+		tst := tst
+		ctx := context.Background()
+		t.Run(n, func(t *testing.T) {
+			t.Parallel()
+
+			moqDb := &DBConnectionMock{}
+			moqRepo := &UserRepositoryMock{}
+			moqRepo.GetUserByUserNameFunc =
+				func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
+					return testutil.GetTestUser(t), nil
+				}
+
+			us := &UserService{
+				DB:   moqDb,
+				Repo: moqRepo,
+			}
+			got, err := us.GetUser(ctx, tst.userName)
+			if err != nil {
+				t.Fatalf("unexpected error: %v: ", err)
+			}
+			assert.Equal(t, tst.want.user, got)
 		})
 	}
 }

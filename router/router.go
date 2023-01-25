@@ -32,6 +32,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 	router.POST("/register", userHandler.RegisterUser)
+	router.GET("/user", userHandler.GetUser)
 
 	return router, cleanup, nil
 }

@@ -11,7 +11,7 @@ import (
 //go:generate go run github.com/matryer/moq -out moq_test.go . UserRepository
 type UserRepository interface {
 	RegisterUser(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error)
-	GetUser(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
+	GetUserByUserName(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
 }
 
 type UserService struct {
@@ -46,6 +46,11 @@ func (us *UserService) RegisterUser(ctx context.Context, form *model.FormRequest
 	return result, nil
 }
 
+// ユーザーネームからユーザーを取得し、該当ユーザーを返す
 func (us *UserService) GetUser(ctx context.Context, userName string) (*model.User, error) {
-	return nil, nil
+	user, err := us.Repo.GetUserByUserName(ctx, us.DB, userName)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
