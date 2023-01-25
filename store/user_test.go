@@ -89,7 +89,7 @@ func TestRegisterUser(t *testing.T) {
 				assert.Equal(t, tst.want.err, err)
 			} else {
 				// 正常系
-				got, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.user.UserName)
+				got, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.user.UserName)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
@@ -102,7 +102,7 @@ func TestRegisterUser(t *testing.T) {
 	}
 }
 
-func TestGetUser(t *testing.T) {
+func TestGetUserByUserName(t *testing.T) {
 	type want struct {
 		user *model.User
 		err  error
@@ -140,11 +140,11 @@ func TestGetUser(t *testing.T) {
 			ust := prepareTest(t)
 
 			if tstName == "errNotFound" {
-				_, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.userName)
+				_, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.userName)
 				assert.Equal(t, tst.want.err, err)
 			} else {
 				_ = prepareUser(ust.ctx, t, ust.tx, tst.want.user)
-				got, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.userName)
+				got, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.userName)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}

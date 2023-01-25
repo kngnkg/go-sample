@@ -44,7 +44,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db DBConnection, u *model
 }
 
 // ユーザーネームからユーザーを取得する。
-func (r *Repository) GetUser(ctx context.Context, db DBConnection, userName string) (*model.User, error) {
+func (r *Repository) GetUserByUserName(ctx context.Context, db DBConnection, userName string) (*model.User, error) {
 	u := &model.User{}
 	query := `SELECT
 				id, name, user_name,
