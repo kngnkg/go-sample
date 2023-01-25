@@ -103,15 +103,56 @@ func TestRegisterUser(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	ust := prepareTest(t)
-
-	want := prepareUser(ust.ctx, t, ust.tx)
-	got, err := ust.repo.GetUser(ust.ctx, ust.tx, want.UserName)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	type want struct {
+		user *model.User
+		err  error
 	}
-	t.Logf("The user ID obtained is: %d", got.Id)
-	assert.Equal(t, want, got)
+	type test struct {
+		// 取得するユーザーのユーザーネーム
+		userName string
+		want     want
+	}
+
+	wantUser := getTestUser()
+	tests := map[string]test{
+		// 正常系
+		"ok": {
+			userName: "testUser",
+			want: want{
+				user: wantUser,
+				err:  nil,
+			},
+		},
+		// ユーザーが見つからない場合
+		"errNotFound": {
+			userName: "testInvalidUser",
+			want: want{
+				user: wantUser,
+				err:  fmt.Errorf("user not found: %w", ErrNotFound),
+			},
+		},
+	}
+
+	for n, tst := range tests {
+		t.Run(n, func(t *testing.T) {
+			tstName := n
+			tst := tst
+			ust := prepareTest(t)
+
+			if tstName == "errNotFound" {
+				_, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.userName)
+				assert.Equal(t, tst.want.err, err)
+			} else {
+				_ = prepareUser(ust.ctx, t, ust.tx, tst.want.user)
+				got, err := ust.repo.GetUser(ust.ctx, ust.tx, tst.userName)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				t.Logf("The user ID obtained is: %d", got.Id)
+				assert.Equal(t, tst.want.user, got)
+			}
+		})
+	}
 }
 
 // テストに使用するユーザーを返す
@@ -129,33 +170,27 @@ func getTestUser() *model.User {
 	}
 }
 
-func prepareUser(ctx context.Context, t *testing.T, con DBConnection) *model.User {
+func prepareUser(ctx context.Context, t *testing.T, con DBConnection, user *model.User) *model.User {
 	t.Helper()
 
 	c := clock.FixedClocker{}
-	want := getTestUser()
 	now := c.Now()
-	want.Created = now
-	want.Modified = now
+	user.Created = now
+	user.Modified = now
 
 	result, err := con.ExecContext(
 		ctx,
 		`INSERT INTO user (
-			name, user_name, password,
-			role, email, address,
-			phone, website, company,
-			created, modified
+			name, user_name, password, role, email, address,
+			phone, website, company, created, modified
 		)
 		VALUES (
-			?, ?, ?,
-			?, ?, ?,
-			?, ?, ?,
-			?, ?
-		);`,
-		want.Name, want.UserName, want.Password,
-		want.Role, want.Email, want.Address,
-		want.Phone, want.Website, want.Company,
-		want.Created, want.Modified,
+			?, ?, ?, ?, ?, ?,
+			?, ?, ?, ?, ?);`,
+		user.Name, user.UserName, user.Password,
+		user.Role, user.Email, user.Address,
+		user.Phone, user.Website, user.Company,
+		user.Created, user.Modified,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -164,6 +199,6 @@ func prepareUser(ctx context.Context, t *testing.T, con DBConnection) *model.Use
 	if err != nil {
 		t.Fatal(err)
 	}
-	want.Id = int(id)
-	return want
+	user.Id = int(id)
+	return user
 }

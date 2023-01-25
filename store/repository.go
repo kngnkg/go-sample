@@ -19,6 +19,7 @@ const (
 )
 
 var (
+	ErrNotFound     = errors.New("not found")
 	ErrAlreadyEntry = errors.New("duplicate entry")
 )
 
