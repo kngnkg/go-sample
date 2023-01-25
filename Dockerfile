@@ -36,6 +36,5 @@ RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \
     go install github.com/stamblerre/gocode@latest && \
     go install golang.org/x/tools/gopls@latest && \
     go install honnef.co/go/tools/cmd/staticcheck@latest && \
-    go install github.com/k0kubun/sqldef/cmd/mysqldef@latest && \
-    go install github.com/cosmtrek/air@latest
-CMD ["air"]
+    go install github.com/k0kubun/sqldef/cmd/mysqldef@latest
+

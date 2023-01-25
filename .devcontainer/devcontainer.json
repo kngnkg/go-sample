@@ -5,12 +5,12 @@
     "workspaceFolder": "/app",
     "settings": {
       "terminal.integrated.defaultProfile.linux": "bash",
-	  "terminal.integrated.profiles.linux": {
-		"bash": {
-			"path": "/bin/bash",
-			"icon": "terminal-bash"
-		}
-	  },
+      "terminal.integrated.profiles.linux": {
+        "bash": {
+          "path": "/bin/bash",
+          "icon": "terminal-bash"
+        }
+      },
       "go.toolsManagement.checkForUpdates": "off",
       "go.gopath": "/go",
       "go.gocodeAutoBuild": true,
@@ -26,6 +26,7 @@
 		"oderwat.indent-rainbow",
 		"eamodio.gitlens",
 		"ms-vscode.makefile-tools",
-		"bungcip.better-toml"
+		"bungcip.better-toml",
+		"wmaurer.vscode-jumpy"
 	]
   }

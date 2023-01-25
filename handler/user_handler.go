@@ -1,14 +1,42 @@
 package handler
 
 import (
+	"context"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/entity"
+	"github.com/kwtryo/go-sample/model"
 )
 
-// GET /users
-func GetAllUser(c *gin.Context) {
-	users, _ := entity.Users()
-	c.JSON(http.StatusOK, users)
+//go:generate go run github.com/matryer/moq -out moq_test.go . UserService
+type UserService interface {
+	RegisterUser(ctx context.Context, form *model.FormRequest) (*model.User, error)
+}
+
+type UserHandler struct {
+	Service UserService
+}
+
+// POST /register
+// ユーザーを登録し、登録したユーザーのIDをレスポンスとして返す
+func (uh *UserHandler) RegisterUser(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+
+	form := &model.FormRequest{}
+	if err := c.ShouldBind(&form); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		c.Abort()
+		return
+	}
+
+	u, err := uh.Service.RegisterUser(c.Request.Context(), form)
+	if err != nil {
+		log.Printf("err: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		c.Abort()
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"id": u.Id})
 }

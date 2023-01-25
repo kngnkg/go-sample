@@ -12,6 +12,18 @@ $ time curl -i localhost:28000/ping
 CTRL+C
 
 
+mysqldef -u todo -p todo -h docker.for.mac.localhost -P 33306 todo 
+#DBコンテナに入る
+$ docker exec -it todo-db bash
+#mysqlへ接続
+$ mysql -u todo -p
+#どんなデータベースがあるか
+show databases;
+#使用したいデータベースに切り替え
+use　データベ-ス名;
+#テーブル一覧
+show tables;
+
 ----
 
 $ go get golang.org/x/sync
@@ -23,3 +35,5 @@ $ go get github.com/stretchr/testify
 $ go get -u github.com/caarlos0/env/v6
 
 $ go install github.com/k0kubun/sqldef/cmd/mysqldef@latest
+
+$ go get github.com/jmoiron/sqlx
