@@ -18,7 +18,7 @@ type userStoreTest struct {
 	repo *Repository
 }
 
-func prepareTest(t *testing.T) *userStoreTest {
+func prepareUserTest(t *testing.T) *userStoreTest {
 	t.Helper()
 
 	ctx := context.Background()
@@ -76,7 +76,7 @@ func TestRegisterUser(t *testing.T) {
 			// CIワークフローでデッドロックが起こるので、暫定策としてコメントアウト
 			// t.Parallel()
 
-			ust := prepareTest(t)
+			ust := prepareUserTest(t)
 
 			registeredUser, err := ust.repo.RegisterUser(ust.ctx, ust.tx, tst.user)
 			if err != nil {
@@ -137,7 +137,7 @@ func TestGetUserByUserName(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			tstName := n
 			tst := tst
-			ust := prepareTest(t)
+			ust := prepareUserTest(t)
 
 			if tstName == "errNotFound" {
 				_, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.userName)
