@@ -10,6 +10,78 @@ import (
 	"sync"
 )
 
+// Ensure, that HealthRepositoryMock does implement HealthRepository.
+// If this is not the case, regenerate this file with moq.
+var _ HealthRepository = &HealthRepositoryMock{}
+
+// HealthRepositoryMock is a mock implementation of HealthRepository.
+//
+//	func TestSomethingThatUsesHealthRepository(t *testing.T) {
+//
+//		// make and configure a mocked HealthRepository
+//		mockedHealthRepository := &HealthRepositoryMock{
+//			PingFunc: func(ctx context.Context, db store.DBConnection) error {
+//				panic("mock out the Ping method")
+//			},
+//		}
+//
+//		// use mockedHealthRepository in code that requires HealthRepository
+//		// and then make assertions.
+//
+//	}
+type HealthRepositoryMock struct {
+	// PingFunc mocks the Ping method.
+	PingFunc func(ctx context.Context, db store.DBConnection) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Ping holds details about calls to the Ping method.
+		Ping []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.DBConnection
+		}
+	}
+	lockPing sync.RWMutex
+}
+
+// Ping calls PingFunc.
+func (mock *HealthRepositoryMock) Ping(ctx context.Context, db store.DBConnection) error {
+	if mock.PingFunc == nil {
+		panic("HealthRepositoryMock.PingFunc: method is nil but HealthRepository.Ping was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Db  store.DBConnection
+	}{
+		Ctx: ctx,
+		Db:  db,
+	}
+	mock.lockPing.Lock()
+	mock.calls.Ping = append(mock.calls.Ping, callInfo)
+	mock.lockPing.Unlock()
+	return mock.PingFunc(ctx, db)
+}
+
+// PingCalls gets all the calls that were made to Ping.
+// Check the length with:
+//
+//	len(mockedHealthRepository.PingCalls())
+func (mock *HealthRepositoryMock) PingCalls() []struct {
+	Ctx context.Context
+	Db  store.DBConnection
+} {
+	var calls []struct {
+		Ctx context.Context
+		Db  store.DBConnection
+	}
+	mock.lockPing.RLock()
+	calls = mock.calls.Ping
+	mock.lockPing.RUnlock()
+	return calls
+}
+
 // Ensure, that UserRepositoryMock does implement UserRepository.
 // If this is not the case, regenerate this file with moq.
 var _ UserRepository = &UserRepositoryMock{}

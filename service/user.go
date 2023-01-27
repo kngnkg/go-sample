@@ -8,7 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate go run github.com/matryer/moq -out moq_test.go . UserRepository
 type UserRepository interface {
 	RegisterUser(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error)
 	GetUserByUserName(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)

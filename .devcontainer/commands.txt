@@ -11,6 +11,9 @@ $ time curl -i localhost:28000/ping
 ### 5秒経過前にdocker runコマンドを中断
 CTRL+C
 
+## テストの雛形を生成
+gotests -w -all service/health.go
+
 
 mysqldef -u todo -p todo -h docker.for.mac.localhost -P 33306 todo 
 #DBコンテナに入る

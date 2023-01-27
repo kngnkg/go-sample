@@ -9,7 +9,6 @@ import (
 	"github.com/kwtryo/go-sample/model"
 )
 
-//go:generate go run github.com/matryer/moq -out moq_test.go . UserService
 type UserService interface {
 	RegisterUser(ctx context.Context, form *model.FormRequest) (*model.User, error)
 	GetUser(ctx context.Context, userName string) (*model.User, error)
