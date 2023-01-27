@@ -2,9 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/kwtryo/go-sample/store"
+)
+
+type key int
+
+const (
+	// コンテキストに入れるテストの名前のKey
+	testNameKey key = iota
 )
 
 func TestHealthService_HealthCheck(t *testing.T) {
@@ -20,7 +28,15 @@ func TestHealthService_HealthCheck(t *testing.T) {
 	moqDb := &DBConnectionMock{}
 	moqRepo := &HealthRepositoryMock{
 		PingFunc: func(ctx context.Context, db store.DBConnection) error {
-			return nil
+			// コンテキストからテストの名前を取得する
+			testName, ok := ctx.Value(testNameKey).(string)
+			if !ok {
+				t.Fatal("unexpected error")
+			}
+			if testName == "ok" {
+				return nil
+			}
+			return errors.New("error")
 		},
 	}
 
@@ -36,6 +52,12 @@ func TestHealthService_HealthCheck(t *testing.T) {
 			args{ctx: ctx},
 			false,
 		},
+		{
+			"error",
+			fields{DB: moqDb, Repo: moqRepo},
+			args{ctx: ctx},
+			true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -43,7 +65,10 @@ func TestHealthService_HealthCheck(t *testing.T) {
 				DB:   tt.fields.DB,
 				Repo: tt.fields.Repo,
 			}
-			if err := hs.HealthCheck(tt.args.ctx); (err != nil) != tt.wantErr {
+
+			// コンテキストに現在のテストの名前を入れる
+			ctx := context.WithValue(tt.args.ctx, testNameKey, tt.name)
+			if err := hs.HealthCheck(ctx); (err != nil) != tt.wantErr {
 				t.Errorf("HealthService.HealthCheck() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
