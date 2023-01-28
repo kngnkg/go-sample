@@ -8,13 +8,6 @@ import (
 	"github.com/kwtryo/go-sample/store"
 )
 
-type key int
-
-const (
-	// コンテキストに入れるテストの名前のKey
-	testNameKey key = iota
-)
-
 func TestHealthService_HealthCheck(t *testing.T) {
 	type fields struct {
 		DB   store.DBConnection
@@ -29,7 +22,7 @@ func TestHealthService_HealthCheck(t *testing.T) {
 	moqRepo := &HealthRepositoryMock{
 		PingFunc: func(ctx context.Context, db store.DBConnection) error {
 			// コンテキストからテストの名前を取得する
-			testName, ok := ctx.Value(testNameKey).(string)
+			testName, ok := ctx.Value(TEST_NAME_KEY).(string)
 			if !ok {
 				t.Fatal("unexpected error")
 			}
@@ -67,7 +60,7 @@ func TestHealthService_HealthCheck(t *testing.T) {
 			}
 
 			// コンテキストに現在のテストの名前を入れる
-			ctx := context.WithValue(tt.args.ctx, testNameKey, tt.name)
+			ctx := context.WithValue(tt.args.ctx, TEST_NAME_KEY, tt.name)
 			if err := hs.HealthCheck(ctx); (err != nil) != tt.wantErr {
 				t.Errorf("HealthService.HealthCheck() error = %v, wantErr %v", err, tt.wantErr)
 			}
