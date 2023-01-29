@@ -6,6 +6,11 @@ import (
 	"github.com/kwtryo/go-sample/model"
 )
 
+const (
+	VALID_USER_NAME   = "testUser"
+	INVALID_USER_NAME = "invalidTestUser"
+)
+
 // テスト用ユーザーを返す
 func GetTestUser(t *testing.T) *model.User {
 	t.Helper()

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/model"
+	"github.com/kwtryo/go-sample/store"
 	"github.com/kwtryo/go-sample/testutil"
 )
 
@@ -79,25 +80,56 @@ func TestUserHandler_RegisterUser(t *testing.T) {
 }
 
 func TestUserHandler_GetUser(t *testing.T) {
-	type fields struct {
-		Service UserService
-	}
-	type args struct {
-		c *gin.Context
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		queryParam   string // クエリパラメータ
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+
 	}{
-		// TODO: Add test cases.
+		{
+			"ok",
+			testutil.VALID_USER_NAME,
+			http.StatusOK,
+			"testdata/get_user/ok_response.json.golden",
+		},
+		{
+			"notFound",
+			testutil.INVALID_USER_NAME,
+			http.StatusNotFound,
+			"testdata/get_user/not_found_response.json.golden",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uh := &UserHandler{
-				Service: tt.fields.Service,
+			moqService := &UserServiceMock{}
+			moqService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
+				if userName == testutil.VALID_USER_NAME {
+					u := testutil.GetTestUser(t)
+					u.Id = 1
+					return u, nil
+				}
+				return nil, store.ErrNotFound
 			}
-			uh.GetUser(tt.args.c)
+			uh := &UserHandler{
+				Service: moqService,
+			}
+
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			// リクエストを作成
+			req := httptest.NewRequest("GET", "/user?user_name="+tt.queryParam, nil)
+			// リクエスト情報をコンテキストに入れる
+			c.Request = req
+			uh.GetUser(c)
+			resp := w.Result()
+
+			testutil.AssertResponse(
+				t,
+				resp,
+				tt.wantStatus,
+				testutil.LoadFile(t, tt.wantRespFile),
+			)
 		})
 	}
 }

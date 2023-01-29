@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/model"
+	"github.com/kwtryo/go-sample/store"
 )
 
 type UserService interface {
@@ -50,7 +51,11 @@ func (uh *UserHandler) GetUser(c *gin.Context) {
 	u, err := uh.Service.GetUser(c.Request.Context(), userName)
 	if err != nil {
 		log.Printf("err: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		if err == store.ErrNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"msg": "ユーザーが見つかりません。"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
 		c.Abort()
 		return
 	}

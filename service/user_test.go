@@ -18,9 +18,6 @@ type key int
 const (
 	// コンテキストに入れるテストの名前のKey
 	TEST_NAME_KEY key = iota
-
-	VALID_USER_NAME   = "testUser"
-	INVALID_USER_NAME = "invalidTestUser"
 )
 
 func TestUserService_RegisterUser(t *testing.T) {
@@ -128,10 +125,10 @@ func TestUserService_GetUser(t *testing.T) {
 	moqRepo := &UserRepositoryMock{}
 	moqRepo.GetUserByUserNameFunc =
 		func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
-			if userName == VALID_USER_NAME {
+			if userName == testutil.VALID_USER_NAME {
 				return getValidTestUser(t), nil
 			}
-			return nil, errors.New("error")
+			return nil, store.ErrNotFound
 		}
 
 	ctx := context.Background()
@@ -148,18 +145,18 @@ func TestUserService_GetUser(t *testing.T) {
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
 				ctx:      ctx,
-				userName: VALID_USER_NAME,
+				userName: testutil.VALID_USER_NAME,
 			},
 			getValidTestUser(t),
 			false,
 		},
-		// ユーザー名が不正な場合
+		// 見つからない場合
 		{
-			"invalidUserName",
+			"notFound",
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
 				ctx:      ctx,
-				userName: INVALID_USER_NAME,
+				userName: testutil.INVALID_USER_NAME, // 存在しないユーザー名
 			},
 			nil,
 			true,

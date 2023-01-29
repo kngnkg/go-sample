@@ -1,0 +1,14 @@
+{
+    "id": 1,
+    "name": "testUserFullName",
+    "username": "testUser",
+    "password": "testPassword",
+    "role": "admin",
+    "email": "test@example.com",
+    "address": "testAddress",
+    "phone": "000-0000-0000",
+    "website": "ttp://test.com",
+    "company": "testCompany",
+    "created": "0001-01-01T00:00:00Z",
+    "modified": "0001-01-01T00:00:00Z"
+}
