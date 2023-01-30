@@ -20,7 +20,7 @@ func TestRepository_Ping(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.OpenDbForTest(t)
 	tx, _ := db.BeginTxx(ctx, nil)
-	defer tx.Rollback()
+	t.Cleanup(func() { _ = tx.Rollback() })
 	cl := clock.FixedClocker{}
 
 	tests := []struct {
