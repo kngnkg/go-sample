@@ -7,17 +7,12 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/kwtryo/go-sample/config"
 )
 
 func OpenDbForTest(t *testing.T) *sqlx.DB {
 	t.Helper()
 
-	cfg, err := config.CreateForTest()
-	if err != nil {
-		t.Fatalf("cannot get config: %v", err)
-	}
-
+	cfg := CreateConfigForTest(t)
 	driver := "mysql"
 	db, err := sql.Open(driver, fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?parseTime=true",

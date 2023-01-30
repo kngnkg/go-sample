@@ -1,8 +1,9 @@
 package router
 
 import (
-	"net/http"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/config"
@@ -12,25 +13,47 @@ import (
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
+	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		// 許可したいHTTPメソッドの一覧
+		AllowMethods: []string{
+			"POST",
+			"GET",
+			"OPTIONS",
+			"PUT",
+			"DELETE",
+		},
+		// 許可したいHTTPリクエストヘッダの一覧
+		AllowHeaders: []string{
+			"Access-Control-Allow-Headers",
+			"Content-Type",
+			"Content-Length",
+			"Accept-Encoding",
+			"X-CSRF-Token",
+			"Authorization",
+		},
+		// 許可したいアクセス元の一覧
+		AllowOrigins: []string{
+			"http://localhost:3000",
+		},
+		// preflight requestで許可した後の接続可能時間
+		MaxAge: 24 * time.Hour,
+	}))
+
 	db, cleanup, err := store.New(cfg)
 	if err != nil {
 		return nil, cleanup, err
 	}
 	r := &store.Repository{Clocker: clock.RealClocker{}}
 
+	healthHandler := &handler.HealthHandler{
+		Service: &service.HealthService{DB: db, Repo: r},
+	}
+	router.GET("/health", healthHandler.HealthCheck)
+
 	userHandler := &handler.UserHandler{
 		Service: &service.UserService{DB: db, Repo: r},
 	}
-
-	router := gin.Default()
-
-	// ヘルスチェック
-	router.GET("/health", func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		// c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
 	router.POST("/register", userHandler.RegisterUser)
 	router.GET("/user", userHandler.GetUser)
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,90 +12,124 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/model"
+	"github.com/kwtryo/go-sample/store"
 	"github.com/kwtryo/go-sample/testutil"
-	"github.com/stretchr/testify/assert"
 )
 
-type userHandlerTest struct {
-	c      *gin.Context
-	router *gin.Engine
-	rec    *httptest.ResponseRecorder
-}
-
-// userHandlerTest構造体を初期化する
-func prepareTest(t *testing.T) *userHandlerTest {
-	t.Helper()
-
-	router := gin.Default()
-	rec := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(rec)
-
-	return &userHandlerTest{
-		c:      c,
-		router: router,
-		rec:    rec,
-	}
-}
-
-// TODO:ゴールデンテストにする
-func TestRegisterUserRoute(t *testing.T) {
-	type want struct {
-		status int
-		body   *strings.Reader
-	}
-	type test struct {
-		user *model.User
-		body *strings.Reader
-		want want
-	}
-
-	testUser := testutil.GetTestUser(t)
-	tests := map[string]test{
-		// 正常系
-		"ok": {
-			user: testUser,
-			body: validBody(t),
-			want: want{
-				status: http.StatusOK,
-				body:   validBody(t),
-			},
+func TestUserHandler_RegisterUser(t *testing.T) {
+	tests := []struct {
+		name         string
+		req          io.Reader // リクエスト
+		wantStatus   int       // ステータスコード
+		wantRespFile string    // レスポンス
+	}{
+		{
+			"ok",
+			validBody(t),
+			http.StatusOK,
+			"testdata/register_user/ok_response.json.golden",
 		},
 		// リクエストが不正な場合
-		"badRequest": {
-			user: testUser,
-			body: invalidBody(t),
-			want: want{
-				status: http.StatusBadRequest,
-				body:   invalidBody(t),
-			},
+		{
+			"badRequest",
+			invalidBody(t),
+			http.StatusBadRequest,
+			"testdata/register_user/bad_req_response.json.golden",
+		},
+		// 内部エラー
+		{
+			"internalServerError",
+			validBody(t),
+			http.StatusInternalServerError,
+			"testdata/register_user/server_err_response.json.golden",
 		},
 	}
-
-	// 正常系、異常系のテストを並行実行する
-	for n, tst := range tests {
-		t.Run(n, func(t *testing.T) {
-			tst := tst
-			t.Parallel()
-
-			uht := prepareTest(t)
-			mockedUserService := &UserServiceMock{}
-			mockedUserService.RegisterUserFunc = func(ctx context.Context, form *model.FormRequest) (*model.User, error) {
-				if tst.want.status == http.StatusOK {
-					return tst.user, nil
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqService := &UserServiceMock{}
+			moqService.RegisterUserFunc = func(ctx context.Context, form *model.FormRequest) (*model.User, error) {
+				if tt.name == "ok" {
+					u := testutil.GetTestUser(t)
+					u.Id = 1
+					return u, nil
 				}
 				return nil, errors.New("error from mock")
 			}
-			handler := &UserHandler{
-				Service: mockedUserService,
+			uh := &UserHandler{
+				Service: moqService,
 			}
-			uht.router.POST("/register", handler.RegisterUser)
 
-			uht.c.Request = httptest.NewRequest("POST", "/register", tst.body)
-			uht.c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			handler.RegisterUser(uht.c)
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			// リクエストを作成
+			req := httptest.NewRequest("POST", "/register", tt.req)
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			// リクエスト情報をコンテキストに入れる
+			c.Request = req
+			uh.RegisterUser(c)
+			resp := w.Result()
 
-			// 期待するステータスコードと一致するか確認する
-			assert.Equal(t, tst.want.status, uht.rec.Code)
+			testutil.AssertResponse(
+				t,
+				resp,
+				tt.wantStatus,
+				testutil.LoadFile(t, tt.wantRespFile),
+			)
+		})
+	}
+}
+
+func TestUserHandler_GetUser(t *testing.T) {
+	tests := []struct {
+		name         string
+		queryParam   string // クエリパラメータ
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+
+	}{
+		{
+			"ok",
+			testutil.VALID_USER_NAME,
+			http.StatusOK,
+			"testdata/get_user/ok_response.json.golden",
+		},
+		{
+			"notFound",
+			testutil.INVALID_USER_NAME,
+			http.StatusNotFound,
+			"testdata/get_user/not_found_response.json.golden",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqService := &UserServiceMock{}
+			moqService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
+				if userName == testutil.VALID_USER_NAME {
+					u := testutil.GetTestUser(t)
+					u.Id = 1
+					return u, nil
+				}
+				return nil, store.ErrNotFound
+			}
+			uh := &UserHandler{
+				Service: moqService,
+			}
+
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			// リクエストを作成
+			req := httptest.NewRequest("GET", "/user?user_name="+tt.queryParam, nil)
+			// リクエスト情報をコンテキストに入れる
+			c.Request = req
+			uh.GetUser(c)
+			resp := w.Result()
+
+			testutil.AssertResponse(
+				t,
+				resp,
+				tt.wantStatus,
+				testutil.LoadFile(t, tt.wantRespFile),
+			)
 		})
 	}
 }
@@ -123,7 +158,6 @@ func invalidBody(t *testing.T) *strings.Reader {
 	// リクエストを作成
 	form := url.Values{}
 	// nameを設定しない
-	// form.Add("name", u.Name)
 	form.Add("username", u.UserName)
 	form.Add("password", u.Password)
 	form.Add("role", u.Role)
@@ -134,64 +168,4 @@ func invalidBody(t *testing.T) *strings.Reader {
 	form.Add("company", u.Company)
 	body := strings.NewReader(form.Encode())
 	return body
-}
-
-func TestGetUserRoute(t *testing.T) {
-	type want struct {
-		status int
-		body   *strings.Reader
-	}
-	type test struct {
-		queryParam string
-		want       want
-	}
-
-	tests := map[string]test{
-		// 正常系
-		"ok": {
-			queryParam: "testUser",
-			want: want{
-				status: http.StatusOK,
-				body:   validBody(t),
-			},
-		},
-		// 見つからない場合
-		"notFound": {
-			queryParam: "testInvalidUser",
-			want: want{
-				status: http.StatusInternalServerError,
-				body:   invalidBody(t),
-			},
-		},
-	}
-
-	// 正常系、異常系のテストを並行実行する
-	for n, tst := range tests {
-		t.Run(n, func(t *testing.T) {
-			tst := tst
-			t.Parallel()
-
-			uht := prepareTest(t)
-			mockedUserService := &UserServiceMock{}
-			mockedUserService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
-				if tst.want.status == http.StatusOK {
-					// idを振る
-					user := testutil.GetTestUser(t)
-					return user, nil
-				}
-				return nil, errors.New("error from mock")
-			}
-			handler := &UserHandler{
-				Service: mockedUserService,
-			}
-			uht.router.GET("/user", handler.GetUser)
-
-			str := "/user?user_name=" + tst.queryParam
-			uht.c.Request = httptest.NewRequest("GET", str, nil)
-			handler.GetUser(uht.c)
-
-			// 期待するステータスコードと一致するか確認する
-			assert.Equal(t, tst.want.status, uht.rec.Code)
-		})
-	}
 }
