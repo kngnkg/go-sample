@@ -9,15 +9,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/config"
+	"github.com/kwtryo/go-sample/testutil"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/errgroup"
 )
 
 func TestRun(t *testing.T) {
-	cfg := &config.Config{
-		Port: 8081,
-	}
+	cfg := testutil.CreateConfigForTest(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	eg, ctx := errgroup.WithContext(ctx)

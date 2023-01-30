@@ -1,9 +1,6 @@
 package config
 
 import (
-	"log"
-	"os"
-
 	"github.com/caarlos0/env/v6"
 )
 
@@ -21,21 +18,6 @@ func New() (*Config, error) {
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
-	}
-	return cfg, nil
-}
-
-// テスト用のconfigを返す
-func CreateForTest() (*Config, error) {
-	cfg := &Config{}
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
-	}
-	cfg.Port = 8081
-	// CI環境ならポート番号を変更
-	if _, defined := os.LookupEnv("CI"); defined {
-		log.Print("CI environment")
-		cfg.DBPort = 3306
 	}
 	return cfg, nil
 }

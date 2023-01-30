@@ -22,8 +22,6 @@ type UserHandler struct {
 // POST /register
 // ユーザーを登録し、登録したユーザーのIDをレスポンスとして返す
 func (uh *UserHandler) RegisterUser(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-
 	form := &model.FormRequest{}
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
@@ -45,8 +43,6 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 // GET /user?user_name=user_name
 // ユーザー名からユーザーを取得し、レスポンスとして返す。
 func (uh *UserHandler) GetUser(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-
 	userName := c.Query("user_name")
 	u, err := uh.Service.GetUser(c.Request.Context(), userName)
 	if err != nil {

@@ -3,26 +3,31 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"github.com/kwtryo/go-sample/testutil"
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {
 	tests := []struct {
-		name       string
-		wantStatus int // ステータスコード
+		name         string
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+
 	}{
 		{
 			"ok",
 			http.StatusOK,
+			"testdata/health_check/ok_response.json.golden",
 		},
 		{
 			"internalServerError",
 			http.StatusInternalServerError,
+			"testdata/health_check/server_err_response.json.golden",
 		},
 	}
 
@@ -48,15 +53,21 @@ func TestHealthHandler_HealthCheck(t *testing.T) {
 				testServer.Close()
 			})
 
+			url := fmt.Sprintf(testServer.URL + "/health")
+			t.Logf("try request to %q", url)
 			// テストサーバーにリクエストを送信
-			resp, err := http.Get(testServer.URL + "/health")
+			resp, err := http.Get(url)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			defer resp.Body.Close()
 
-			// 期待するステータスコードと一致するか確認する
-			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+			testutil.AssertResponse(
+				t,
+				resp,
+				tt.wantStatus,
+				testutil.LoadFile(t, tt.wantRespFile),
+			)
 		})
 	}
 }

@@ -19,10 +19,6 @@ type HealthHandler struct {
 // GET /health
 // ヘルスチェック
 func (hh *HealthHandler) HealthCheck(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	// c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	// c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
 	if err := hh.Service.HealthCheck(c.Request.Context()); err != nil {
 		c.JSON(http.StatusInternalServerError, model.Health{
 			Health:   model.StatusOrange,
