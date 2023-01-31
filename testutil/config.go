@@ -20,6 +20,7 @@ func CreateConfigForTest(t *testing.T) *config.Config {
 	if _, defined := os.LookupEnv("CI"); defined {
 		log.Print("CI environment")
 		cfg.DBPort = 3306
+		cfg.RedisPort = 6379
 	}
 	return cfg
 }
