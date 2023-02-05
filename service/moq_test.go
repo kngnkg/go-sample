@@ -82,6 +82,84 @@ func (mock *HealthRepositoryMock) PingCalls() []struct {
 	return calls
 }
 
+// Ensure, that AuthRepositoryMock does implement AuthRepository.
+// If this is not the case, regenerate this file with moq.
+var _ AuthRepository = &AuthRepositoryMock{}
+
+// AuthRepositoryMock is a mock implementation of AuthRepository.
+//
+//	func TestSomethingThatUsesAuthRepository(t *testing.T) {
+//
+//		// make and configure a mocked AuthRepository
+//		mockedAuthRepository := &AuthRepositoryMock{
+//			GetUserByUserNameFunc: func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
+//				panic("mock out the GetUserByUserName method")
+//			},
+//		}
+//
+//		// use mockedAuthRepository in code that requires AuthRepository
+//		// and then make assertions.
+//
+//	}
+type AuthRepositoryMock struct {
+	// GetUserByUserNameFunc mocks the GetUserByUserName method.
+	GetUserByUserNameFunc func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// GetUserByUserName holds details about calls to the GetUserByUserName method.
+		GetUserByUserName []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.DBConnection
+			// UserName is the userName argument value.
+			UserName string
+		}
+	}
+	lockGetUserByUserName sync.RWMutex
+}
+
+// GetUserByUserName calls GetUserByUserNameFunc.
+func (mock *AuthRepositoryMock) GetUserByUserName(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
+	if mock.GetUserByUserNameFunc == nil {
+		panic("AuthRepositoryMock.GetUserByUserNameFunc: method is nil but AuthRepository.GetUserByUserName was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Db       store.DBConnection
+		UserName string
+	}{
+		Ctx:      ctx,
+		Db:       db,
+		UserName: userName,
+	}
+	mock.lockGetUserByUserName.Lock()
+	mock.calls.GetUserByUserName = append(mock.calls.GetUserByUserName, callInfo)
+	mock.lockGetUserByUserName.Unlock()
+	return mock.GetUserByUserNameFunc(ctx, db, userName)
+}
+
+// GetUserByUserNameCalls gets all the calls that were made to GetUserByUserName.
+// Check the length with:
+//
+//	len(mockedAuthRepository.GetUserByUserNameCalls())
+func (mock *AuthRepositoryMock) GetUserByUserNameCalls() []struct {
+	Ctx      context.Context
+	Db       store.DBConnection
+	UserName string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Db       store.DBConnection
+		UserName string
+	}
+	mock.lockGetUserByUserName.RLock()
+	calls = mock.calls.GetUserByUserName
+	mock.lockGetUserByUserName.RUnlock()
+	return calls
+}
+
 // Ensure, that UserRepositoryMock does implement UserRepository.
 // If this is not the case, regenerate this file with moq.
 var _ UserRepository = &UserRepositoryMock{}

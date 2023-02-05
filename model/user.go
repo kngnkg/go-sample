@@ -31,3 +31,9 @@ type FormRequest struct {
 	Website  string `form:"website" binding:"required"`
 	Company  string `form:"company" binding:"required"`
 }
+
+// ログイン時のリクエストをバインドする
+type Login struct {
+	Username string `form:"username" json:"username" binding:"required"`
+	Password string `form:"password" json:"password" binding:"required"`
+}
