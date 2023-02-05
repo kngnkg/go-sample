@@ -22,7 +22,7 @@ func User(u *model.User) *model.User {
 	if err != nil {
 		log.Fatalf("unexpected error: %v", err)
 	}
-	random := strconv.Itoa(rand.Int())[:5]
+	random := strconv.Itoa(rand.Int())[:3]
 
 	result := &model.User{
 		Id:       rand.Int(),
@@ -97,4 +97,21 @@ func LoginFormBody(l *model.Login) *strings.Reader {
 	form.Add("password", l.Password)
 	body := strings.NewReader(form.Encode())
 	return body
+}
+
+// ユーザー登録時に送信されるボディ
+func RegisterUserBody(u *model.User) url.Values {
+	user := User(u)
+
+	form := url.Values{}
+	form.Add("name", user.Name)
+	form.Add("username", user.UserName)
+	form.Add("password", user.Password)
+	form.Add("role", user.Role)
+	form.Add("email", user.Email)
+	form.Add("address", user.Address)
+	form.Add("phone", user.Phone)
+	form.Add("website", user.Website)
+	form.Add("company", user.Company)
+	return form
 }

@@ -3,12 +3,9 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/testutil"
 )
 
@@ -46,27 +43,14 @@ func TestHealthHandler_HealthCheck(t *testing.T) {
 				Service: moqService,
 			}
 
-			router := gin.Default()
-			router.GET("/health", hh.HealthCheck)
-			testServer := httptest.NewServer(router) // サーバを立てる
-			t.Cleanup(func() {
-				testServer.Close()
-			})
-
-			url := fmt.Sprintf(testServer.URL + "/health")
-			t.Logf("try request to %q", url)
-			// テストサーバーにリクエストを送信
-			resp, err := http.Get(url)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			defer resp.Body.Close()
-
-			testutil.AssertResponse(
+			testutil.CheckHandlerFunc(
 				t,
-				resp,
+				hh.HealthCheck,
+				"GET",
+				"",
+				nil,
 				tt.wantStatus,
-				testutil.LoadFile(t, tt.wantRespFile),
+				tt.wantRespFile,
 			)
 		})
 	}

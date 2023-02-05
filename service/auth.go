@@ -72,7 +72,7 @@ func (as *AuthService) IdentityHandler(c *gin.Context) interface{} {
 	}
 }
 
-// ユーザーの正当性を確認する
+// トークンのユーザ情報からの認証
 func (as *AuthService) Authorizator(data interface{}, c *gin.Context) bool {
 	v, ok := data.(*model.User)
 	if !ok {
