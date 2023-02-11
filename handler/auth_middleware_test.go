@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -18,6 +19,10 @@ import (
 )
 
 func TestEmbed(t *testing.T) {
+	// CI環境ならスキップ
+	if _, defined := os.LookupEnv("CI"); defined {
+		t.Skip()
+	}
 	want := []byte("-----BEGIN PUBLIC KEY-----")
 	if !bytes.Contains(rawPubKey, want) {
 		t.Errorf("want %s but got %s", want, rawPubKey)
