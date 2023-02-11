@@ -62,11 +62,21 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db DBConnection, use
 	return u, nil
 }
 
-// DBのユーザーを全て削除する
-func (r *Repository) DeleteUserAll(ctx context.Context, db DBConnection) error {
-	query := `DELETE FROM user;`
-	if _, err := db.ExecContext(ctx, query); err != nil {
-		return err
+// 全ユーザーを取得する。
+func (r *Repository) GetAllUsers(ctx context.Context, db DBConnection) ([]*model.User, error) {
+	users := model.Users{}
+	query := `SELECT
+				id, name, user_name,
+				role, email, address,
+				phone, website, company,
+				created, modified
+			FROM user;`
+	if err := db.SelectContext(ctx, &users, query); err != nil {
+		return nil, err
 	}
-	return nil
+	// ユーザーが一人も存在しない場合
+	if len(users) == 0 {
+		return nil, ErrNotFound
+	}
+	return users, nil
 }

@@ -45,6 +45,7 @@ curl -i "localhost:18000/auth/user?user_name=testUserName" -H "Authorization:Bea
 
 ## テストの雛形を生成
 gotests -w -all service/health.go
+gotests -w -only GetAllUsers store/user.go
 
 ## 秘密鍵を生成
 openssl genrsa 4096 > secret.pem

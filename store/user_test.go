@@ -2,203 +2,208 @@ package store
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kwtryo/go-sample/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 )
 
-type userStoreTest struct {
-	ctx  context.Context
-	tx   *sqlx.Tx
-	repo *Repository
-}
-
-func prepareUserTest(t *testing.T) *userStoreTest {
-	t.Helper()
-
-	ctx := context.Background()
-	tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
-	t.Cleanup(func() { _ = tx.Rollback() })
-	if err != nil {
-		t.Fatal(err)
+func TestRepository_RegisterUser(t *testing.T) {
+	type fields struct {
+		Clocker clock.Clocker
 	}
-	repo := &Repository{
-		Clocker: clock.FixedClocker{},
-	}
-
-	ust := &userStoreTest{
-		ctx:  ctx,
-		tx:   tx,
-		repo: repo,
-	}
-	if err := ust.repo.DeleteUserAll(ust.ctx, ust.tx); err != nil {
-		t.Logf("failed to initialize task: %v", err)
-	}
-	return ust
-}
-
-func TestRegisterUser(t *testing.T) {
-	type want struct {
-		err error
-	}
-	type test struct {
-		// 登録するユーザー
-		user *model.User
-		want want
-	}
-
-	tests := map[string]test{
+	user := fixture.User(&model.User{
+		Id: 0, // 未設定
+	})
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *model.User
+		wantErr error
+	}{
 		// 正常系
-		"ok": {
-			user: getTestUser(),
-			want: want{
-				err: nil,
-			},
+		{
+			"ok",
+			fields{&clock.FixedClocker{}},
+			user,
+			nil,
 		},
 		// 既に登録されていた場合
-		"errAlreadyEntry": {
-			user: getTestUser(),
-			want: want{
-				err: fmt.Errorf("cannot create same name user: %w", ErrAlreadyEntry),
-			},
+		{
+			"errAlreadyEntry",
+			fields{&clock.FixedClocker{}},
+			nil,
+			ErrAlreadyEntry,
 		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Repository{
+				Clocker: tt.fields.Clocker,
+			}
 
-	for n, tst := range tests {
-		t.Run(n, func(t *testing.T) {
-			tstName := n
-			tst := tst
-			// CIワークフローでデッドロックが起こるので、暫定策としてコメントアウト
-			// t.Parallel()
-
-			ust := prepareUserTest(t)
-
-			registeredUser, err := ust.repo.RegisterUser(ust.ctx, ust.tx, tst.user)
+			ctx := context.TODO()
+			tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
+			t.Cleanup(func() { _ = tx.Rollback() })
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatal(err)
 			}
 
-			if tstName == "errAlreadyEntry" {
-				// 異常系のテストの場合のみ再度登録する
-				_, err = ust.repo.RegisterUser(ust.ctx, ust.tx, tst.user)
-				assert.Equal(t, tst.want.err, err)
-			} else {
-				// 正常系
-				got, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.user.UserName)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-
-				t.Logf("The user ID obtained is: %d", got.Id)
-
-				assert.Equal(t, registeredUser, got)
+			testutil.DeleteUserAll(ctx, t, tx)
+			if tt.name == "errAlreadyEntry" {
+				// 先にユーザーを登録する
+				_ = testutil.PrepareUser(ctx, t, r.Clocker, tx, user)
 			}
+			got, err := r.RegisterUser(ctx, tx, user)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
+			}
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestGetUserByUserName(t *testing.T) {
-	type want struct {
-		user *model.User
-		err  error
+func TestRepository_GetByUserName(t *testing.T) {
+	const userName = "testUserName"
+
+	type fields struct {
+		Clocker clock.Clocker
 	}
-	type test struct {
-		// 取得するユーザーのユーザーネーム
+	user := fixture.User(&model.User{
+		Id:       0, // 未設定
+		UserName: userName,
+	})
+	tests := []struct {
+		name     string
+		fields   fields
 		userName string
-		want     want
-	}
-
-	wantUser := getTestUser()
-	tests := map[string]test{
+		want     *model.User
+		wantErr  error
+	}{
 		// 正常系
-		"ok": {
-			userName: "testUser",
-			want: want{
-				user: wantUser,
-				err:  nil,
-			},
+		{
+			"ok",
+			fields{&clock.FixedClocker{}},
+			userName,
+			user,
+			nil,
 		},
-		// ユーザーが見つからない場合
-		"errNotFound": {
-			userName: "testInvalidUser",
-			want: want{
-				user: wantUser,
-				err:  fmt.Errorf("user not found: %w", ErrNotFound),
-			},
+		// ユーザーが存在しない場合
+		{
+			"notFound",
+			fields{&clock.FixedClocker{}},
+			"invalidUserName",
+			nil,
+			ErrNotFound,
 		},
 	}
-
-	for n, tst := range tests {
-		t.Run(n, func(t *testing.T) {
-			tstName := n
-			tst := tst
-			ust := prepareUserTest(t)
-
-			if tstName == "errNotFound" {
-				_, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.userName)
-				assert.Equal(t, tst.want.err, err)
-			} else {
-				_ = prepareUser(ust.ctx, t, ust.tx, tst.want.user)
-				got, err := ust.repo.GetUserByUserName(ust.ctx, ust.tx, tst.userName)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				t.Logf("The user ID obtained is: %d", got.Id)
-				assert.Equal(t, tst.want.user, got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Repository{
+				Clocker: tt.fields.Clocker,
 			}
+
+			ctx := context.TODO()
+			tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
+			t.Cleanup(func() { _ = tx.Rollback() })
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutil.DeleteUserAll(ctx, t, tx)
+			// ユーザーを登録する
+			_ = testutil.PrepareUser(ctx, t, r.Clocker, tx, user)
+
+			got, err := r.GetUserByUserName(ctx, tx, tt.userName)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
+			}
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-// テストに使用するユーザーを返す
-func getTestUser() *model.User {
-	return &model.User{
-		Name:     "testUserFullName",
-		UserName: "testUser",
-		Password: "hashedTestPassword",
-		Role:     "admin",
-		Email:    "test@example.com",
-		Address:  "testAddress",
-		Phone:    "000-0000-0000",
-		Website:  "ttp://test.com",
-		Company:  "testCompany",
+func TestRepository_GetAllUsers(t *testing.T) {
+	type fields struct {
+		Clocker clock.Clocker
 	}
-}
-
-func prepareUser(ctx context.Context, t *testing.T, con DBConnection, user *model.User) *model.User {
-	t.Helper()
-
-	c := clock.FixedClocker{}
-	now := c.Now()
-	user.Created = now
-	user.Modified = now
-
-	result, err := con.ExecContext(
-		ctx,
-		`INSERT INTO user (
-			name, user_name, password, role, email, address,
-			phone, website, company, created, modified
-		)
-		VALUES (
-			?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?);`,
-		user.Name, user.UserName, user.Password,
-		user.Role, user.Email, user.Address,
-		user.Phone, user.Website, user.Company,
-		user.Created, user.Modified,
-	)
-	if err != nil {
-		t.Fatal(err)
+	// ランダムなユーザーを5人登録する
+	users := model.Users{}
+	for i := 0; i < 5; i++ {
+		user := fixture.User(&model.User{})
+		users = append(users, user)
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		fields  fields
+		users   model.Users // 登録するユーザー
+		want    []*model.User
+		wantErr error
+	}{
+		// 正常系
+		{
+			"ok",
+			fields{&clock.FixedClocker{}},
+			users,
+			users,
+			nil,
+		},
+		// DBにユーザーが1人もいない場合
+		{
+			"notExists",
+			fields{&clock.FixedClocker{}},
+			model.Users{},
+			nil,
+			ErrNotFound,
+		},
 	}
-	user.Id = int(id)
-	return user
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Repository{
+				Clocker: tt.fields.Clocker,
+			}
+
+			ctx := context.TODO()
+			tx, err := testutil.OpenDbForTest(t).BeginTxx(ctx, nil)
+			t.Cleanup(func() { _ = tx.Rollback() })
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testutil.DeleteUserAll(ctx, t, tx)
+			// ユーザーを登録する
+			for _, v := range tt.users {
+				_ = testutil.PrepareUser(ctx, t, r.Clocker, tx, v)
+			}
+
+			got, err := r.GetAllUsers(ctx, tx)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
+			}
+
+			if tt.name != "ok" {
+				// 終了
+				return
+			}
+			for i, v := range got {
+				assert.Equal(t, tt.want[i].Name, v.Name)
+				assert.Equal(t, tt.want[i].UserName, v.UserName)
+				assert.Empty(t, v.Password) // Passwordは取得しない
+				assert.Equal(t, tt.want[i].Role, v.Role)
+				assert.Equal(t, tt.want[i].Email, v.Email)
+				assert.Equal(t, tt.want[i].Address, v.Address)
+				assert.Equal(t, tt.want[i].Phone, v.Phone)
+				assert.Equal(t, tt.want[i].Website, v.Website)
+				assert.Equal(t, tt.want[i].Company, v.Company)
+				assert.Equal(t, tt.want[i].Created, v.Created)
+				assert.Equal(t, tt.want[i].Modified, v.Modified)
+			}
+		})
+	}
 }
