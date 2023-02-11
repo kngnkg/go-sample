@@ -335,6 +335,9 @@ var _ UserService = &UserServiceMock{}
 //
 //		// make and configure a mocked UserService
 //		mockedUserService := &UserServiceMock{
+//			GetAllUsersFunc: func(ctx context.Context) (model.Users, error) {
+//				panic("mock out the GetAllUsers method")
+//			},
 //			GetUserFunc: func(ctx context.Context, userName string) (*model.User, error) {
 //				panic("mock out the GetUser method")
 //			},
@@ -348,6 +351,9 @@ var _ UserService = &UserServiceMock{}
 //
 //	}
 type UserServiceMock struct {
+	// GetAllUsersFunc mocks the GetAllUsers method.
+	GetAllUsersFunc func(ctx context.Context) (model.Users, error)
+
 	// GetUserFunc mocks the GetUser method.
 	GetUserFunc func(ctx context.Context, userName string) (*model.User, error)
 
@@ -356,6 +362,11 @@ type UserServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetAllUsers holds details about calls to the GetAllUsers method.
+		GetAllUsers []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// GetUser holds details about calls to the GetUser method.
 		GetUser []struct {
 			// Ctx is the ctx argument value.
@@ -371,8 +382,41 @@ type UserServiceMock struct {
 			Form *model.FormRequest
 		}
 	}
+	lockGetAllUsers  sync.RWMutex
 	lockGetUser      sync.RWMutex
 	lockRegisterUser sync.RWMutex
+}
+
+// GetAllUsers calls GetAllUsersFunc.
+func (mock *UserServiceMock) GetAllUsers(ctx context.Context) (model.Users, error) {
+	if mock.GetAllUsersFunc == nil {
+		panic("UserServiceMock.GetAllUsersFunc: method is nil but UserService.GetAllUsers was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockGetAllUsers.Lock()
+	mock.calls.GetAllUsers = append(mock.calls.GetAllUsers, callInfo)
+	mock.lockGetAllUsers.Unlock()
+	return mock.GetAllUsersFunc(ctx)
+}
+
+// GetAllUsersCalls gets all the calls that were made to GetAllUsers.
+// Check the length with:
+//
+//	len(mockedUserService.GetAllUsersCalls())
+func (mock *UserServiceMock) GetAllUsersCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetAllUsers.RLock()
+	calls = mock.calls.GetAllUsers
+	mock.lockGetAllUsers.RUnlock()
+	return calls
 }
 
 // GetUser calls GetUserFunc.

@@ -53,6 +53,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	auth.Use(authMiddleware.MiddlewareFunc())
 	{
 		auth.GET("/logout", authMiddleware.LogoutHandler)
+		auth.GET("/users", userHandler.GetAllUsers)
 		auth.GET("/user", userHandler.GetUser)
 	}
 

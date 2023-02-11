@@ -24,6 +24,9 @@ export JWT_TOKEN=xxx
 ### ユーザーネームで検索
 curl --silent "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN" | jq .
 curl -i "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN"
+### 全ユーザーを取得
+curl --silent "localhost:8080/auth/users" -H "Authorization:Bearer $JWT_TOKEN" | jq .
+curl -i "localhost:8080/auth/users" -H "Authorization:Bearer $JWT_TOKEN"
 ### ログアウト
 curl --silent "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN" | jq .
 curl -i "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN"

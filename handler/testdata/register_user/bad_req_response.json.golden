@@ -1,3 +1,1 @@
-{
-    "msg": "Key: 'FormRequest.Name' Error:Field validation for 'Name' failed on the 'required' tag"
-}
+{"msg":"不正なリクエストです。"}

@@ -31,7 +31,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db DBConnection, u *model
 	if err != nil {
 		var mysqlError *mysql.MySQLError
 		if errors.As(err, &mysqlError) && mysqlError.Number == ErrCodeMySQLDuplicateEntry {
-			err = fmt.Errorf("cannot create same name user: %w", ErrAlreadyEntry)
+			err = fmt.Errorf("cannot create same name user, username=%s: %w", u.UserName, ErrAlreadyEntry)
 		}
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db DBConnection, use
 			WHERE user_name = ?;`
 	if err := db.GetContext(ctx, u, query, userName); err != nil {
 		if err == sql.ErrNoRows {
-			err = fmt.Errorf("user not found: %w", ErrNotFound)
+			err = fmt.Errorf("user not found, username=%s: %w", userName, ErrNotFound)
 		}
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (r *Repository) GetAllUsers(ctx context.Context, db DBConnection) ([]*model
 	}
 	// ユーザーが一人も存在しない場合
 	if len(users) == 0 {
-		return nil, ErrNotFound
+		return nil, fmt.Errorf("none of the users exist: %w", ErrNotFound)
 	}
 	return users, nil
 }
