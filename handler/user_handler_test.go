@@ -5,18 +5,33 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/store"
 	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kwtryo/go-sample/testutil/fixture"
 )
 
 func TestUserHandler_RegisterUser(t *testing.T) {
+	const (
+		UserName = "testUserName"
+	)
+	cl := clock.FixedClocker{}
+	validUser := fixture.User(&model.User{
+		Name:     "testUserFullName",
+		UserName: UserName,
+		Password: "testPassword",
+		Created:  cl.Now(),
+		Modified: cl.Now(),
+	})
+	form := fixture.RegisterUserBody(validUser)
+	invalidForm := fixture.RegisterUserBody(validUser)
+	// 不正な値にするためにnameを削除する
+	invalidForm.Del("name")
+
 	tests := []struct {
 		name         string
 		req          io.Reader // リクエスト
@@ -25,21 +40,21 @@ func TestUserHandler_RegisterUser(t *testing.T) {
 	}{
 		{
 			"ok",
-			validBody(t),
+			strings.NewReader(form.Encode()),
 			http.StatusOK,
 			"testdata/register_user/ok_response.json.golden",
 		},
 		// リクエストが不正な場合
 		{
 			"badRequest",
-			invalidBody(t),
+			strings.NewReader(invalidForm.Encode()),
 			http.StatusBadRequest,
 			"testdata/register_user/bad_req_response.json.golden",
 		},
 		// 内部エラー
 		{
 			"internalServerError",
-			validBody(t),
+			strings.NewReader(form.Encode()),
 			http.StatusInternalServerError,
 			"testdata/register_user/server_err_response.json.golden",
 		},
@@ -48,54 +63,58 @@ func TestUserHandler_RegisterUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			moqService := &UserServiceMock{}
 			moqService.RegisterUserFunc = func(ctx context.Context, form *model.FormRequest) (*model.User, error) {
-				if tt.name == "ok" {
-					u := testutil.GetTestUser(t)
-					u.Id = 1
-					return u, nil
+				if tt.name == "internalServerError" {
+					return nil, errors.New("error from mock")
 				}
-				return nil, errors.New("error from mock")
+				validUser.Id = 1
+				return validUser, nil
 			}
 			uh := &UserHandler{
 				Service: moqService,
 			}
 
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			// リクエストを作成
-			req := httptest.NewRequest("POST", "/register", tt.req)
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			// リクエスト情報をコンテキストに入れる
-			c.Request = req
-			uh.RegisterUser(c)
-			resp := w.Result()
-
-			testutil.AssertResponse(
+			testutil.CheckHandlerFunc(
 				t,
-				resp,
+				uh.RegisterUser,
+				"POST",
+				"",
+				tt.req,
 				tt.wantStatus,
-				testutil.LoadFile(t, tt.wantRespFile),
+				tt.wantRespFile,
 			)
 		})
 	}
 }
 
 func TestUserHandler_GetUser(t *testing.T) {
+	const (
+		UserName = "testUserName"
+	)
+	cl := clock.FixedClocker{}
+	validUser := fixture.User(&model.User{
+		Id:       1,
+		Name:     "testUserFullName",
+		UserName: UserName,
+		Password: "testPassword",
+		Created:  cl.Now(),
+		Modified: cl.Now(),
+	})
+
 	tests := []struct {
 		name         string
 		queryParam   string // クエリパラメータ
 		wantStatus   int    // ステータスコード
 		wantRespFile string // レスポンス
-
 	}{
 		{
 			"ok",
-			testutil.VALID_USER_NAME,
+			validUser.UserName,
 			http.StatusOK,
 			"testdata/get_user/ok_response.json.golden",
 		},
 		{
 			"notFound",
-			testutil.INVALID_USER_NAME,
+			"invalidUserName",
 			http.StatusNotFound,
 			"testdata/get_user/not_found_response.json.golden",
 		},
@@ -104,10 +123,9 @@ func TestUserHandler_GetUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			moqService := &UserServiceMock{}
 			moqService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
-				if userName == testutil.VALID_USER_NAME {
-					u := testutil.GetTestUser(t)
-					u.Id = 1
-					return u, nil
+				if userName == UserName {
+					validUser.Password = "hashedPassword"
+					return validUser, nil
 				}
 				return nil, store.ErrNotFound
 			}
@@ -115,57 +133,15 @@ func TestUserHandler_GetUser(t *testing.T) {
 				Service: moqService,
 			}
 
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			// リクエストを作成
-			req := httptest.NewRequest("GET", "/user?user_name="+tt.queryParam, nil)
-			// リクエスト情報をコンテキストに入れる
-			c.Request = req
-			uh.GetUser(c)
-			resp := w.Result()
-
-			testutil.AssertResponse(
+			testutil.CheckHandlerFunc(
 				t,
-				resp,
+				uh.GetUser,
+				"GET",
+				"?user_name="+tt.queryParam,
+				nil,
 				tt.wantStatus,
-				testutil.LoadFile(t, tt.wantRespFile),
+				tt.wantRespFile,
 			)
 		})
 	}
-}
-
-func validBody(t *testing.T) *strings.Reader {
-	u := testutil.GetTestUser(t)
-
-	// リクエストを作成
-	form := url.Values{}
-	form.Add("name", u.Name)
-	form.Add("username", u.UserName)
-	form.Add("password", u.Password)
-	form.Add("role", u.Role)
-	form.Add("email", u.Email)
-	form.Add("address", u.Address)
-	form.Add("phone", u.Phone)
-	form.Add("website", u.Website)
-	form.Add("company", u.Company)
-	body := strings.NewReader(form.Encode())
-	return body
-}
-
-func invalidBody(t *testing.T) *strings.Reader {
-	u := testutil.GetTestUser(t)
-
-	// リクエストを作成
-	form := url.Values{}
-	// nameを設定しない
-	form.Add("username", u.UserName)
-	form.Add("password", u.Password)
-	form.Add("role", u.Role)
-	form.Add("email", u.Email)
-	form.Add("address", u.Address)
-	form.Add("phone", u.Phone)
-	form.Add("website", u.Website)
-	form.Add("company", u.Company)
-	body := strings.NewReader(form.Encode())
-	return body
 }

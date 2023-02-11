@@ -5,6 +5,8 @@ package handler
 
 import (
 	"context"
+	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/model"
 	"sync"
 )
@@ -72,6 +74,254 @@ func (mock *HealthServiceMock) HealthCheckCalls() []struct {
 	mock.lockHealthCheck.RLock()
 	calls = mock.calls.HealthCheck
 	mock.lockHealthCheck.RUnlock()
+	return calls
+}
+
+// Ensure, that AuthServiceMock does implement AuthService.
+// If this is not the case, regenerate this file with moq.
+var _ AuthService = &AuthServiceMock{}
+
+// AuthServiceMock is a mock implementation of AuthService.
+//
+//	func TestSomethingThatUsesAuthService(t *testing.T) {
+//
+//		// make and configure a mocked AuthService
+//		mockedAuthService := &AuthServiceMock{
+//			AuthenticatorFunc: func(c *gin.Context) (interface{}, error) {
+//				panic("mock out the Authenticator method")
+//			},
+//			AuthorizatorFunc: func(data interface{}, c *gin.Context) bool {
+//				panic("mock out the Authorizator method")
+//			},
+//			IdentityHandlerFunc: func(c *gin.Context) interface{} {
+//				panic("mock out the IdentityHandler method")
+//			},
+//			LogoutFunc: func(c *gin.Context) error {
+//				panic("mock out the Logout method")
+//			},
+//			PayloadFuncFunc: func(data interface{}) jwt.MapClaims {
+//				panic("mock out the PayloadFunc method")
+//			},
+//		}
+//
+//		// use mockedAuthService in code that requires AuthService
+//		// and then make assertions.
+//
+//	}
+type AuthServiceMock struct {
+	// AuthenticatorFunc mocks the Authenticator method.
+	AuthenticatorFunc func(c *gin.Context) (interface{}, error)
+
+	// AuthorizatorFunc mocks the Authorizator method.
+	AuthorizatorFunc func(data interface{}, c *gin.Context) bool
+
+	// IdentityHandlerFunc mocks the IdentityHandler method.
+	IdentityHandlerFunc func(c *gin.Context) interface{}
+
+	// LogoutFunc mocks the Logout method.
+	LogoutFunc func(c *gin.Context) error
+
+	// PayloadFuncFunc mocks the PayloadFunc method.
+	PayloadFuncFunc func(data interface{}) jwt.MapClaims
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Authenticator holds details about calls to the Authenticator method.
+		Authenticator []struct {
+			// C is the c argument value.
+			C *gin.Context
+		}
+		// Authorizator holds details about calls to the Authorizator method.
+		Authorizator []struct {
+			// Data is the data argument value.
+			Data interface{}
+			// C is the c argument value.
+			C *gin.Context
+		}
+		// IdentityHandler holds details about calls to the IdentityHandler method.
+		IdentityHandler []struct {
+			// C is the c argument value.
+			C *gin.Context
+		}
+		// Logout holds details about calls to the Logout method.
+		Logout []struct {
+			// C is the c argument value.
+			C *gin.Context
+		}
+		// PayloadFunc holds details about calls to the PayloadFunc method.
+		PayloadFunc []struct {
+			// Data is the data argument value.
+			Data interface{}
+		}
+	}
+	lockAuthenticator   sync.RWMutex
+	lockAuthorizator    sync.RWMutex
+	lockIdentityHandler sync.RWMutex
+	lockLogout          sync.RWMutex
+	lockPayloadFunc     sync.RWMutex
+}
+
+// Authenticator calls AuthenticatorFunc.
+func (mock *AuthServiceMock) Authenticator(c *gin.Context) (interface{}, error) {
+	if mock.AuthenticatorFunc == nil {
+		panic("AuthServiceMock.AuthenticatorFunc: method is nil but AuthService.Authenticator was just called")
+	}
+	callInfo := struct {
+		C *gin.Context
+	}{
+		C: c,
+	}
+	mock.lockAuthenticator.Lock()
+	mock.calls.Authenticator = append(mock.calls.Authenticator, callInfo)
+	mock.lockAuthenticator.Unlock()
+	return mock.AuthenticatorFunc(c)
+}
+
+// AuthenticatorCalls gets all the calls that were made to Authenticator.
+// Check the length with:
+//
+//	len(mockedAuthService.AuthenticatorCalls())
+func (mock *AuthServiceMock) AuthenticatorCalls() []struct {
+	C *gin.Context
+} {
+	var calls []struct {
+		C *gin.Context
+	}
+	mock.lockAuthenticator.RLock()
+	calls = mock.calls.Authenticator
+	mock.lockAuthenticator.RUnlock()
+	return calls
+}
+
+// Authorizator calls AuthorizatorFunc.
+func (mock *AuthServiceMock) Authorizator(data interface{}, c *gin.Context) bool {
+	if mock.AuthorizatorFunc == nil {
+		panic("AuthServiceMock.AuthorizatorFunc: method is nil but AuthService.Authorizator was just called")
+	}
+	callInfo := struct {
+		Data interface{}
+		C    *gin.Context
+	}{
+		Data: data,
+		C:    c,
+	}
+	mock.lockAuthorizator.Lock()
+	mock.calls.Authorizator = append(mock.calls.Authorizator, callInfo)
+	mock.lockAuthorizator.Unlock()
+	return mock.AuthorizatorFunc(data, c)
+}
+
+// AuthorizatorCalls gets all the calls that were made to Authorizator.
+// Check the length with:
+//
+//	len(mockedAuthService.AuthorizatorCalls())
+func (mock *AuthServiceMock) AuthorizatorCalls() []struct {
+	Data interface{}
+	C    *gin.Context
+} {
+	var calls []struct {
+		Data interface{}
+		C    *gin.Context
+	}
+	mock.lockAuthorizator.RLock()
+	calls = mock.calls.Authorizator
+	mock.lockAuthorizator.RUnlock()
+	return calls
+}
+
+// IdentityHandler calls IdentityHandlerFunc.
+func (mock *AuthServiceMock) IdentityHandler(c *gin.Context) interface{} {
+	if mock.IdentityHandlerFunc == nil {
+		panic("AuthServiceMock.IdentityHandlerFunc: method is nil but AuthService.IdentityHandler was just called")
+	}
+	callInfo := struct {
+		C *gin.Context
+	}{
+		C: c,
+	}
+	mock.lockIdentityHandler.Lock()
+	mock.calls.IdentityHandler = append(mock.calls.IdentityHandler, callInfo)
+	mock.lockIdentityHandler.Unlock()
+	return mock.IdentityHandlerFunc(c)
+}
+
+// IdentityHandlerCalls gets all the calls that were made to IdentityHandler.
+// Check the length with:
+//
+//	len(mockedAuthService.IdentityHandlerCalls())
+func (mock *AuthServiceMock) IdentityHandlerCalls() []struct {
+	C *gin.Context
+} {
+	var calls []struct {
+		C *gin.Context
+	}
+	mock.lockIdentityHandler.RLock()
+	calls = mock.calls.IdentityHandler
+	mock.lockIdentityHandler.RUnlock()
+	return calls
+}
+
+// Logout calls LogoutFunc.
+func (mock *AuthServiceMock) Logout(c *gin.Context) error {
+	if mock.LogoutFunc == nil {
+		panic("AuthServiceMock.LogoutFunc: method is nil but AuthService.Logout was just called")
+	}
+	callInfo := struct {
+		C *gin.Context
+	}{
+		C: c,
+	}
+	mock.lockLogout.Lock()
+	mock.calls.Logout = append(mock.calls.Logout, callInfo)
+	mock.lockLogout.Unlock()
+	return mock.LogoutFunc(c)
+}
+
+// LogoutCalls gets all the calls that were made to Logout.
+// Check the length with:
+//
+//	len(mockedAuthService.LogoutCalls())
+func (mock *AuthServiceMock) LogoutCalls() []struct {
+	C *gin.Context
+} {
+	var calls []struct {
+		C *gin.Context
+	}
+	mock.lockLogout.RLock()
+	calls = mock.calls.Logout
+	mock.lockLogout.RUnlock()
+	return calls
+}
+
+// PayloadFunc calls PayloadFuncFunc.
+func (mock *AuthServiceMock) PayloadFunc(data interface{}) jwt.MapClaims {
+	if mock.PayloadFuncFunc == nil {
+		panic("AuthServiceMock.PayloadFuncFunc: method is nil but AuthService.PayloadFunc was just called")
+	}
+	callInfo := struct {
+		Data interface{}
+	}{
+		Data: data,
+	}
+	mock.lockPayloadFunc.Lock()
+	mock.calls.PayloadFunc = append(mock.calls.PayloadFunc, callInfo)
+	mock.lockPayloadFunc.Unlock()
+	return mock.PayloadFuncFunc(data)
+}
+
+// PayloadFuncCalls gets all the calls that were made to PayloadFunc.
+// Check the length with:
+//
+//	len(mockedAuthService.PayloadFuncCalls())
+func (mock *AuthServiceMock) PayloadFuncCalls() []struct {
+	Data interface{}
+} {
+	var calls []struct {
+		Data interface{}
+	}
+	mock.lockPayloadFunc.RLock()
+	calls = mock.calls.PayloadFunc
+	mock.lockPayloadFunc.RUnlock()
 	return calls
 }
 

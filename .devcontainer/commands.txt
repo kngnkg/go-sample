@@ -11,8 +11,46 @@ $ time curl -i localhost:28000/ping
 ### 5秒経過前にdocker runコマンドを中断
 CTRL+C
 
+## 開発コンテナから送信する
+### ヘルスチェック
+curl -i localhost:8080/health
+### ユーザ登録
+curl --silent localhost:8080/register -F "name=test" -F "username=testUserName" -F "password=testPassword" -F "role=admin" -F "email=example@email.com" -F "address=testAddress" -F "phone=000-0000-0000" -F "website=example.com" -F "company=testCompany"
+### ログイン
+curl --silent localhost:8080/login -F "username=testUserName" -F "password=testPassword" | jq .
+curl -i localhost:8080/login -F "username=testUserName" -F "password=testPassword"
+### 発行されたトークンを設定
+export JWT_TOKEN=xxx
+### ユーザーネームで検索
+curl --silent "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN" | jq .
+curl -i "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN"
+### ログアウト
+curl --silent "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN" | jq .
+curl -i "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN"
+### リフレッシュ
+curl --silent localhost:8080/auth/refresh_token -H "Authorization:Bearer $JWT_TOKEN" | jq .
+curl -i localhost:8080/auth/refresh_token -H "Authorization:Bearer $JWT_TOKEN"
+
+
+## ホストマシンから送信する
+### ログイン
+curl -i localhost:18000/login -F "username=testUserName" -F "password=testPassword"
+### 発行されたトークンを設定
+export JWT_TOKEN=xxx
+### リフレッシュ
+curl -i localhost:18000/auth/refresh_token -H "Authorization:Bearer $JWT_TOKEN"
+### ユーザーネームで検索
+curl -i "localhost:18000/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN"
+
+
 ## テストの雛形を生成
 gotests -w -all service/health.go
+
+## 秘密鍵を生成
+openssl genrsa 4096 > secret.pem
+
+## 証明書を生成
+openssl rsa -pubout < secret.pem > public.pem
 
 
 mysqldef -u todo -p todo -h docker.for.mac.localhost -P 33306 todo 

@@ -30,6 +30,7 @@ RUN echo "source /usr/share/bash-completion/completions/git" >> ~/.bashrc
 # Module ModeをONにする
 ENV GO111MODULE on
 WORKDIR /app
+RUN apt -y install jq
 RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \ 
     go install -v github.com/go-delve/delve/cmd/dlv@latest && \
     go install github.com/ramya-rao-a/go-outline@latest && \
