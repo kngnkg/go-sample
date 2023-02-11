@@ -8,16 +8,9 @@ import (
 
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/store"
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kwtryo/go-sample/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
-)
-
-type key int
-
-const (
-	// コンテキストに入れるテストの名前のKey
-	TEST_NAME_KEY key = iota
 )
 
 func TestUserService_RegisterUser(t *testing.T) {
@@ -30,51 +23,56 @@ func TestUserService_RegisterUser(t *testing.T) {
 		form *model.FormRequest
 	}
 
+	userName := "testUserName"
+	password := "password"
+	user := fixture.User(&model.User{
+		UserName: userName,
+		Password: password,
+	})
+	user.Password = password
+	userForm := fixture.UserFormRequest(user)
+
+	moqErr := errors.New("err from mock")
 	moqDb := &DBConnectionMock{}
 	moqRepo := &UserRepositoryMock{}
 	moqRepo.RegisterUserFunc =
 		func(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error) {
-			// コンテキストからテストの名前を取得する
-			testName, ok := ctx.Value(TEST_NAME_KEY).(string)
-			if !ok {
-				t.Fatal("unexpected error")
+			if u.UserName != userName {
+				return nil, moqErr
 			}
-			if testName == "ok" {
-				u.Id = 1
-				return u, nil
-			}
-			return nil, errors.New("error")
+			u.Id = user.Id
+			return u, nil
 		}
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    *model.User
-		wantErr bool
+		wantErr error
 	}{
 		{
 			"ok",
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
-				ctx:  ctx,
-				form: getValidTestFormRequest(t),
+				context.TODO(),
+				userForm,
 			},
-			getValidTestUser(t),
-			false,
+			user,
+			nil,
 		},
-		// フォームリクエストが不正な場合
+		// ユーザー登録に失敗
 		{
-			"invalidFormRequest",
+			"failedToRegister",
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
-				ctx:  ctx,
-				form: getInvalidTestFormRequest(t),
+				context.TODO(),
+				fixture.UserFormRequest(&model.User{
+					UserName: "failedToRegister",
+				}),
 			},
 			nil,
-			true,
+			moqErr,
 		},
 	}
 	for _, tt := range tests {
@@ -83,29 +81,85 @@ func TestUserService_RegisterUser(t *testing.T) {
 				DB:   tt.fields.DB,
 				Repo: tt.fields.Repo,
 			}
-
-			// コンテキストに現在のテストの名前を入れる
-			ctx := context.WithValue(tt.args.ctx, TEST_NAME_KEY, tt.name)
-			got, err := us.RegisterUser(ctx, tt.args.form)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserService.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := us.RegisterUser(tt.args.ctx, tt.args.form)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
+			}
+			if tt.name != "ok" {
 				return
 			}
 
-			// 以下、正常系のみチェック
-			if tt.name == "ok" {
-				assert.Equal(t, got.Name, tt.want.Name)
-				assert.Equal(t, got.UserName, tt.want.UserName)
-				// パスワードの確認
-				if err := bcrypt.CompareHashAndPassword([]byte(got.Password), []byte(tt.want.Password)); err != nil {
-					t.Fatalf("password is wrong: %v", err)
+			assert.Equal(t, got.Name, tt.want.Name)
+			assert.Equal(t, got.UserName, tt.want.UserName)
+			// パスワードの確認
+			if err := bcrypt.CompareHashAndPassword([]byte(got.Password), []byte(password)); err != nil {
+				t.Fatalf("password is wrong: %v", err)
+			}
+			assert.Equal(t, got.Role, tt.want.Role)
+			assert.Equal(t, got.Email, tt.want.Email)
+			assert.Equal(t, got.Address, tt.want.Address)
+			assert.Equal(t, got.Phone, tt.want.Phone)
+			assert.Equal(t, got.Website, tt.want.Website)
+			assert.Equal(t, got.Company, tt.want.Company)
+		})
+	}
+}
+
+func TestUserService_GetAllUsers(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	// ランダムなユーザーを5人生成する
+	users := model.Users{}
+	for i := 0; i < 5; i++ {
+		user := fixture.User(&model.User{})
+		users = append(users, user)
+	}
+
+	moqErr := errors.New("err from mock")
+	tests := []struct {
+		name    string
+		args    args
+		want    model.Users
+		wantErr error
+	}{
+		// 正常系
+		{
+			"ok",
+			args{ctx: context.TODO()},
+			users,
+			nil,
+		},
+		// 取得に失敗
+		{
+			"failedToGetUsers",
+			args{ctx: context.TODO()},
+			nil,
+			moqErr,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqDb := &DBConnectionMock{}
+			moqRepo := &UserRepositoryMock{}
+			moqRepo.GetAllUsersFunc =
+				func(ctx context.Context, db store.DBConnection) ([]*model.User, error) {
+					if tt.name == "failedToGetUsers" {
+						return nil, moqErr
+					}
+					return users, nil
 				}
-				assert.Equal(t, got.Role, tt.want.Role)
-				assert.Equal(t, got.Email, tt.want.Email)
-				assert.Equal(t, got.Address, tt.want.Address)
-				assert.Equal(t, got.Phone, tt.want.Phone)
-				assert.Equal(t, got.Website, tt.want.Website)
-				assert.Equal(t, got.Company, tt.want.Company)
+			us := &UserService{
+				DB:   moqDb,
+				Repo: moqRepo,
+			}
+
+			got, err := us.GetAllUsers(tt.args.ctx)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UserService.GetAllUsers() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -120,46 +174,48 @@ func TestUserService_GetUser(t *testing.T) {
 		ctx      context.Context
 		userName string
 	}
+	search := "testUserName"
+	user := fixture.User(&model.User{
+		UserName: search,
+	})
 
+	moqErr := errors.New("err from mock")
 	moqDb := &DBConnectionMock{}
 	moqRepo := &UserRepositoryMock{}
 	moqRepo.GetUserByUserNameFunc =
 		func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
-			if userName == testutil.VALID_USER_NAME {
-				return getValidTestUser(t), nil
+			if userName != search {
+				return nil, moqErr
 			}
-			return nil, store.ErrNotFound
+			return user, nil
 		}
-
-	ctx := context.Background()
-
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    *model.User
-		wantErr bool
+		wantErr error
 	}{
 		{
 			"ok",
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
-				ctx:      ctx,
-				userName: testutil.VALID_USER_NAME,
+				context.TODO(),
+				search,
 			},
-			getValidTestUser(t),
-			false,
+			user,
+			nil,
 		},
-		// 見つからない場合
+		// 取得に失敗
 		{
-			"notFound",
+			"failedToGetUser",
 			fields{DB: moqDb, Repo: moqRepo},
 			args{
-				ctx:      ctx,
-				userName: testutil.INVALID_USER_NAME, // 存在しないユーザー名
+				context.TODO(),
+				"invalid",
 			},
 			nil,
-			true,
+			moqErr,
 		},
 	}
 	for _, tt := range tests {
@@ -169,44 +225,12 @@ func TestUserService_GetUser(t *testing.T) {
 				Repo: tt.fields.Repo,
 			}
 			got, err := us.GetUser(tt.args.ctx, tt.args.userName)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserService.GetUser() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("want err: %v but got: %v", tt.wantErr, err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("UserService.GetUser() = %v, want %v", got, tt.want)
 			}
 		})
 	}
-}
-
-func getValidTestUser(t *testing.T) *model.User {
-	t.Helper()
-	u := testutil.GetTestUser(t)
-	u.Id = 1
-	return u
-}
-
-// テスト用FormRequest構造体を返す
-func getValidTestFormRequest(t *testing.T) *model.FormRequest {
-	t.Helper()
-
-	return &model.FormRequest{
-		Name:     "testUserFullName",
-		UserName: "testUser",
-		Password: "testPassword",
-		Role:     "admin",
-		Email:    "test@example.com",
-		Address:  "testAddress",
-		Phone:    "000-0000-0000",
-		Website:  "ttp://test.com",
-		Company:  "testCompany",
-	}
-}
-
-func getInvalidTestFormRequest(t *testing.T) *model.FormRequest {
-	t.Helper()
-	fr := getValidTestFormRequest(t)
-	fr.UserName = "invalidUser"
-	return fr
 }

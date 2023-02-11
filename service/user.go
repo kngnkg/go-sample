@@ -10,6 +10,7 @@ import (
 
 type UserRepository interface {
 	RegisterUser(ctx context.Context, db store.DBConnection, u *model.User) (*model.User, error)
+	GetAllUsers(ctx context.Context, db store.DBConnection) ([]*model.User, error)
 	GetUserByUserName(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
 }
 
@@ -43,6 +44,15 @@ func (us *UserService) RegisterUser(ctx context.Context, form *model.FormRequest
 		return nil, err
 	}
 	return result, nil
+}
+
+// 全てのユーザーを取得する
+func (us *UserService) GetAllUsers(ctx context.Context) (model.Users, error) {
+	users, err := us.Repo.GetAllUsers(ctx, us.DB)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // ユーザーネームからユーザーを取得し、該当ユーザーを返す

@@ -133,7 +133,7 @@ func TestRepository_GetAllUsers(t *testing.T) {
 	type fields struct {
 		Clocker clock.Clocker
 	}
-	// ランダムなユーザーを5人登録する
+	// ランダムなユーザーを5人生成する
 	users := model.Users{}
 	for i := 0; i < 5; i++ {
 		user := fixture.User(&model.User{})

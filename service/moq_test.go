@@ -348,6 +348,9 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //		// make and configure a mocked UserRepository
 //		mockedUserRepository := &UserRepositoryMock{
+//			GetAllUsersFunc: func(ctx context.Context, db store.DBConnection) ([]*model.User, error) {
+//				panic("mock out the GetAllUsers method")
+//			},
 //			GetUserByUserNameFunc: func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
@@ -361,6 +364,9 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //	}
 type UserRepositoryMock struct {
+	// GetAllUsersFunc mocks the GetAllUsers method.
+	GetAllUsersFunc func(ctx context.Context, db store.DBConnection) ([]*model.User, error)
+
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
 	GetUserByUserNameFunc func(ctx context.Context, db store.DBConnection, userName string) (*model.User, error)
 
@@ -369,6 +375,13 @@ type UserRepositoryMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetAllUsers holds details about calls to the GetAllUsers method.
+		GetAllUsers []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.DBConnection
+		}
 		// GetUserByUserName holds details about calls to the GetUserByUserName method.
 		GetUserByUserName []struct {
 			// Ctx is the ctx argument value.
@@ -388,8 +401,45 @@ type UserRepositoryMock struct {
 			U *model.User
 		}
 	}
+	lockGetAllUsers       sync.RWMutex
 	lockGetUserByUserName sync.RWMutex
 	lockRegisterUser      sync.RWMutex
+}
+
+// GetAllUsers calls GetAllUsersFunc.
+func (mock *UserRepositoryMock) GetAllUsers(ctx context.Context, db store.DBConnection) ([]*model.User, error) {
+	if mock.GetAllUsersFunc == nil {
+		panic("UserRepositoryMock.GetAllUsersFunc: method is nil but UserRepository.GetAllUsers was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Db  store.DBConnection
+	}{
+		Ctx: ctx,
+		Db:  db,
+	}
+	mock.lockGetAllUsers.Lock()
+	mock.calls.GetAllUsers = append(mock.calls.GetAllUsers, callInfo)
+	mock.lockGetAllUsers.Unlock()
+	return mock.GetAllUsersFunc(ctx, db)
+}
+
+// GetAllUsersCalls gets all the calls that were made to GetAllUsers.
+// Check the length with:
+//
+//	len(mockedUserRepository.GetAllUsersCalls())
+func (mock *UserRepositoryMock) GetAllUsersCalls() []struct {
+	Ctx context.Context
+	Db  store.DBConnection
+} {
+	var calls []struct {
+		Ctx context.Context
+		Db  store.DBConnection
+	}
+	mock.lockGetAllUsers.RLock()
+	calls = mock.calls.GetAllUsers
+	mock.lockGetAllUsers.RUnlock()
+	return calls
 }
 
 // GetUserByUserName calls GetUserByUserNameFunc.
