@@ -96,6 +96,9 @@ var _ AuthService = &AuthServiceMock{}
 //			IdentityHandlerFunc: func(c *gin.Context) interface{} {
 //				panic("mock out the IdentityHandler method")
 //			},
+//			LogoutFunc: func(c *gin.Context) error {
+//				panic("mock out the Logout method")
+//			},
 //			PayloadFuncFunc: func(data interface{}) jwt.MapClaims {
 //				panic("mock out the PayloadFunc method")
 //			},
@@ -114,6 +117,9 @@ type AuthServiceMock struct {
 
 	// IdentityHandlerFunc mocks the IdentityHandler method.
 	IdentityHandlerFunc func(c *gin.Context) interface{}
+
+	// LogoutFunc mocks the Logout method.
+	LogoutFunc func(c *gin.Context) error
 
 	// PayloadFuncFunc mocks the PayloadFunc method.
 	PayloadFuncFunc func(data interface{}) jwt.MapClaims
@@ -137,6 +143,11 @@ type AuthServiceMock struct {
 			// C is the c argument value.
 			C *gin.Context
 		}
+		// Logout holds details about calls to the Logout method.
+		Logout []struct {
+			// C is the c argument value.
+			C *gin.Context
+		}
 		// PayloadFunc holds details about calls to the PayloadFunc method.
 		PayloadFunc []struct {
 			// Data is the data argument value.
@@ -146,6 +157,7 @@ type AuthServiceMock struct {
 	lockAuthenticator   sync.RWMutex
 	lockAuthorizator    sync.RWMutex
 	lockIdentityHandler sync.RWMutex
+	lockLogout          sync.RWMutex
 	lockPayloadFunc     sync.RWMutex
 }
 
@@ -246,6 +258,38 @@ func (mock *AuthServiceMock) IdentityHandlerCalls() []struct {
 	mock.lockIdentityHandler.RLock()
 	calls = mock.calls.IdentityHandler
 	mock.lockIdentityHandler.RUnlock()
+	return calls
+}
+
+// Logout calls LogoutFunc.
+func (mock *AuthServiceMock) Logout(c *gin.Context) error {
+	if mock.LogoutFunc == nil {
+		panic("AuthServiceMock.LogoutFunc: method is nil but AuthService.Logout was just called")
+	}
+	callInfo := struct {
+		C *gin.Context
+	}{
+		C: c,
+	}
+	mock.lockLogout.Lock()
+	mock.calls.Logout = append(mock.calls.Logout, callInfo)
+	mock.lockLogout.Unlock()
+	return mock.LogoutFunc(c)
+}
+
+// LogoutCalls gets all the calls that were made to Logout.
+// Check the length with:
+//
+//	len(mockedAuthService.LogoutCalls())
+func (mock *AuthServiceMock) LogoutCalls() []struct {
+	C *gin.Context
+} {
+	var calls []struct {
+		C *gin.Context
+	}
+	mock.lockLogout.RLock()
+	calls = mock.calls.Logout
+	mock.lockLogout.RUnlock()
 	return calls
 }
 

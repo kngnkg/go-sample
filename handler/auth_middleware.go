@@ -2,6 +2,7 @@ package handler
 
 import (
 	_ "embed"
+	"net/http"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -25,6 +26,7 @@ type AuthService interface {
 	PayloadFunc(data interface{}) jwt.MapClaims
 	IdentityHandler(c *gin.Context) interface{}
 	Authorizator(data interface{}, c *gin.Context) bool
+	Logout(c *gin.Context) error
 }
 
 type JWTer struct {
@@ -61,6 +63,8 @@ func (j *JWTer) NewJWTMiddleware() (*jwt.GinJWTMiddleware, error) {
 		//トークンのユーザ情報からの認証
 		Authorizator: j.Service.Authorizator,
 
+		LogoutResponse: j.logoutResponse,
+
 		Unauthorized: unauthorized,
 
 		// "<source>:<name>"形式の文字列
@@ -73,6 +77,18 @@ func (j *JWTer) NewJWTMiddleware() (*jwt.GinJWTMiddleware, error) {
 		// "orig_iat"
 		// 現在の時間(トークンが生成された時間)
 		TimeFunc: j.Clocker.Now,
+	})
+}
+
+func (j *JWTer) logoutResponse(c *gin.Context, code int) {
+	if err := j.Service.Logout(c); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
 	})
 }
 

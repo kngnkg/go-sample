@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/kwtryo/go-sample/config"
+	"github.com/redis/go-redis/v9"
 )
 
 type KVS struct {
@@ -25,6 +25,7 @@ func NewKVS(ctx context.Context, cfg *config.Config) (*KVS, error) {
 
 // Keyをセットする
 func (k *KVS) Save(ctx context.Context, key string, uid int) error {
+	// TTLは30分に設定
 	return k.Cli.Set(ctx, key, uid, 30*time.Minute).Err()
 }
 
@@ -35,4 +36,8 @@ func (k *KVS) Load(ctx context.Context, key string) (int, error) {
 		return 0, fmt.Errorf("failed to get by %q: %w", key, ErrNotFound)
 	}
 	return id, nil
+}
+
+func (k *KVS) Delete(ctx context.Context, key string) error {
+	return k.Cli.Del(ctx, key).Err()
 }

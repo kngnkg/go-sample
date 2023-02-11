@@ -2,16 +2,17 @@ package handler
 
 import (
 	"bytes"
-	"context"
 	_ "embed"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
 
+	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/kwtryo/go-sample/clock"
 	"github.com/kwtryo/go-sample/model"
 	"github.com/kwtryo/go-sample/service"
-	"github.com/kwtryo/go-sample/store"
 	"github.com/kwtryo/go-sample/testutil"
 	"github.com/kwtryo/go-sample/testutil/fixture"
 )
@@ -36,41 +37,38 @@ func TestLoginRoute(t *testing.T) {
 	const (
 		UserName    = "testUserName"
 		RawPassword = "testPassword"
+		uuid        = "8c2b2ad4-9598-44ed-b1b9-9ec355332f60"
 	)
-	type fields struct {
-		Service AuthService
-		Clocker clock.Clocker
-	}
-	cl := clock.FixedClocker{}
-	db := testutil.OpenDbForTest(t)
-	repo := store.Repository{Clocker: cl}
-	as := &service.AuthService{DB: db, Repo: &repo}
-
-	// テスト用ユーザーをDBに登録する
-	// 不具合が起こりそうなので考える
-	err := repo.DeleteUserAll(context.Background(), db)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+	type mock struct {
+		user  *model.User
+		token jwt.MapClaims
+		err   error
 	}
 	user := fixture.User(&model.User{
 		UserName: UserName,
 		Password: RawPassword,
 	})
-	_, err = repo.RegisterUser(context.Background(), db, user)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+
+	tok := jwt.MapClaims{
+		service.JwtIdKey:    uuid,                          // ユニークID
+		service.IssuerKey:   "github.com/kwtryo/go-sample", // 発行者
+		service.SubjectKey:  "access_token",                // 用途
+		service.AudienceKey: "github.com/kwtryo/go-sample", // 想定利用者
+		// 以下独自クレーム
+		service.UserNameKey: user.UserName,
+		service.RoleKey:     user.Role,
 	}
 
 	tests := []struct {
 		name         string
-		fields       fields
+		mock         mock
 		req          io.Reader // リクエスト
 		wantStatus   int       // ステータスコード
 		wantRespFile string    // レスポンス
 	}{
 		{
 			"ok",
-			fields{Service: as, Clocker: cl},
+			mock{user, tok, nil},
 			fixture.LoginFormBody(&model.Login{
 				Username: UserName,
 				Password: RawPassword,
@@ -78,34 +76,30 @@ func TestLoginRoute(t *testing.T) {
 			http.StatusOK,
 			"testdata/login/ok_response.json.golden",
 		},
-		// ユーザーネームが不正
+		// リクエストが不正
 		{
-			"invalidUserName",
-			fields{Service: as, Clocker: cl},
+			"badRequest",
+			mock{nil, jwt.MapClaims{}, errors.New("err from mock")},
 			fixture.LoginFormBody(&model.Login{
 				Username: "invalidUserName",
 				Password: RawPassword,
 			}),
 			http.StatusUnauthorized,
-			"testdata/login/invalid_username_response.json.golden",
-		},
-		// パスワードが不正
-		{
-			"invalidPassword",
-			fields{Service: as, Clocker: cl},
-			fixture.LoginFormBody(&model.Login{
-				Username: UserName,
-				Password: "invalidPassword",
-			}),
-			http.StatusUnauthorized,
-			"testdata/login/invalid_pass_response.json.golden",
+			"testdata/login/bad_req_response.json.golden",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			serviceMoq := &AuthServiceMock{}
+			serviceMoq.AuthenticatorFunc = func(c *gin.Context) (interface{}, error) {
+				return user, tt.mock.err
+			}
+			serviceMoq.PayloadFuncFunc = func(data interface{}) jwt.MapClaims {
+				return tt.mock.token
+			}
 			j := &JWTer{
-				Service: tt.fields.Service,
-				Clocker: tt.fields.Clocker,
+				Service: serviceMoq,
+				Clocker: clock.FixedClocker{},
 			}
 			got, err := j.NewJWTMiddleware()
 			if err != nil {
@@ -119,6 +113,55 @@ func TestLoginRoute(t *testing.T) {
 				"POST",
 				"",
 				tt.req,
+				tt.wantStatus,
+				tt.wantRespFile,
+			)
+		})
+	}
+}
+
+func TestLogoutRoute(t *testing.T) {
+	// 正常値
+	const (
+		UserName = "testUserName"
+	)
+	serviceMoq := &AuthServiceMock{}
+	serviceMoq.LogoutFunc = func(c *gin.Context) error {
+		return nil
+	}
+	tests := []struct {
+		name         string
+		user         *model.User
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+	}{
+		{
+			"ok",
+			fixture.User(&model.User{
+				UserName: UserName,
+			}),
+			http.StatusOK,
+			"testdata/logout/ok_response.json.golden",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			j := &JWTer{
+				Service: serviceMoq,
+				Clocker: clock.FixedClocker{},
+			}
+			authMiddleware, err := j.NewJWTMiddleware()
+			if err != nil {
+				t.Errorf("JWTer.NewJWTMiddleware() error = %v", err)
+				return
+			}
+
+			testutil.CheckHandlerFunc(
+				t,
+				authMiddleware.LogoutHandler,
+				"GET",
+				"",
+				nil,
 				tt.wantStatus,
 				tt.wantRespFile,
 			)

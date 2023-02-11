@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http/httptest"
@@ -159,17 +160,29 @@ func TestAuthService_PayloadFunc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			moqStore := &StoreMock{
+				SaveFunc: func(ctx context.Context, key string, uid int) error {
+					return nil
+				},
+			}
 			as := &AuthService{
-				DB:   &DBConnectionMock{},
-				Repo: &AuthRepositoryMock{},
+				DB:    &DBConnectionMock{},
+				Repo:  &AuthRepositoryMock{},
+				Store: moqStore,
 			}
 
 			got := as.PayloadFunc(tt.args.data)
 			if tt.name == "ok" {
+				assert.Equal(t, "github.com/kwtryo/go-sample", got[IssuerKey])
+				assert.Equal(t, "access_token", got[SubjectKey])
+				assert.Equal(t, "github.com/kwtryo/go-sample", got[AudienceKey])
 				assert.Equal(t, tt.wantUserName, got[UserNameKey])
 				assert.Equal(t, tt.wantRole, got[RoleKey])
 			} else {
 				// 未定義であることを確認
+				assert.Equal(t, nil, got[IssuerKey])
+				assert.Equal(t, nil, got[SubjectKey])
+				assert.Equal(t, nil, got[AudienceKey])
 				assert.Equal(t, nil, got[UserNameKey])
 				assert.Equal(t, nil, got[RoleKey])
 			}
@@ -199,15 +212,39 @@ func TestAuthService_IdentityHandler(t *testing.T) {
 				Role:     Role,
 			},
 		},
+		// ユーザーが見つからない場合
+		{
+			"notFound",
+			payloadFuncArgs{validUser},
+			nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			as := &AuthService{
-				DB:   &DBConnectionMock{},
-				Repo: &AuthRepositoryMock{},
+			moqStore := &StoreMock{
+				SaveFunc: func(ctx context.Context, key string, uid int) error {
+					return nil
+				},
+				LoadFunc: func(ctx context.Context, key string) (int, error) {
+					if tt.name == "notFound" {
+						return 0, errors.New("error from mock")
+					}
+					return 0, nil
+				},
 			}
+			as := &AuthService{
+				DB:    &DBConnectionMock{},
+				Repo:  &AuthRepositoryMock{},
+				Store: moqStore,
+			}
+
+			// リクエストの値がnullになっている
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
 			c.Set("JWT_PAYLOAD", as.PayloadFunc(tt.payloadFuncArgs.data))
+			// リクエストを作成
+			req := httptest.NewRequest("GET", "/test", nil)
+			// リクエスト情報をコンテキストに入れる
+			c.Request = req
 
 			if got := as.IdentityHandler(c); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("AuthService.IdentityHandler() = %v, want %v", got, tt.want)

@@ -10,6 +10,184 @@ import (
 	"sync"
 )
 
+// Ensure, that StoreMock does implement Store.
+// If this is not the case, regenerate this file with moq.
+var _ Store = &StoreMock{}
+
+// StoreMock is a mock implementation of Store.
+//
+//	func TestSomethingThatUsesStore(t *testing.T) {
+//
+//		// make and configure a mocked Store
+//		mockedStore := &StoreMock{
+//			DeleteFunc: func(ctx context.Context, key string) error {
+//				panic("mock out the Delete method")
+//			},
+//			LoadFunc: func(ctx context.Context, key string) (int, error) {
+//				panic("mock out the Load method")
+//			},
+//			SaveFunc: func(ctx context.Context, key string, uid int) error {
+//				panic("mock out the Save method")
+//			},
+//		}
+//
+//		// use mockedStore in code that requires Store
+//		// and then make assertions.
+//
+//	}
+type StoreMock struct {
+	// DeleteFunc mocks the Delete method.
+	DeleteFunc func(ctx context.Context, key string) error
+
+	// LoadFunc mocks the Load method.
+	LoadFunc func(ctx context.Context, key string) (int, error)
+
+	// SaveFunc mocks the Save method.
+	SaveFunc func(ctx context.Context, key string, uid int) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Delete holds details about calls to the Delete method.
+		Delete []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
+		// Load holds details about calls to the Load method.
+		Load []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
+		// Save holds details about calls to the Save method.
+		Save []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+			// UID is the uid argument value.
+			UID int
+		}
+	}
+	lockDelete sync.RWMutex
+	lockLoad   sync.RWMutex
+	lockSave   sync.RWMutex
+}
+
+// Delete calls DeleteFunc.
+func (mock *StoreMock) Delete(ctx context.Context, key string) error {
+	if mock.DeleteFunc == nil {
+		panic("StoreMock.DeleteFunc: method is nil but Store.Delete was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockDelete.Lock()
+	mock.calls.Delete = append(mock.calls.Delete, callInfo)
+	mock.lockDelete.Unlock()
+	return mock.DeleteFunc(ctx, key)
+}
+
+// DeleteCalls gets all the calls that were made to Delete.
+// Check the length with:
+//
+//	len(mockedStore.DeleteCalls())
+func (mock *StoreMock) DeleteCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockDelete.RLock()
+	calls = mock.calls.Delete
+	mock.lockDelete.RUnlock()
+	return calls
+}
+
+// Load calls LoadFunc.
+func (mock *StoreMock) Load(ctx context.Context, key string) (int, error) {
+	if mock.LoadFunc == nil {
+		panic("StoreMock.LoadFunc: method is nil but Store.Load was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockLoad.Lock()
+	mock.calls.Load = append(mock.calls.Load, callInfo)
+	mock.lockLoad.Unlock()
+	return mock.LoadFunc(ctx, key)
+}
+
+// LoadCalls gets all the calls that were made to Load.
+// Check the length with:
+//
+//	len(mockedStore.LoadCalls())
+func (mock *StoreMock) LoadCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockLoad.RLock()
+	calls = mock.calls.Load
+	mock.lockLoad.RUnlock()
+	return calls
+}
+
+// Save calls SaveFunc.
+func (mock *StoreMock) Save(ctx context.Context, key string, uid int) error {
+	if mock.SaveFunc == nil {
+		panic("StoreMock.SaveFunc: method is nil but Store.Save was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+		UID int
+	}{
+		Ctx: ctx,
+		Key: key,
+		UID: uid,
+	}
+	mock.lockSave.Lock()
+	mock.calls.Save = append(mock.calls.Save, callInfo)
+	mock.lockSave.Unlock()
+	return mock.SaveFunc(ctx, key, uid)
+}
+
+// SaveCalls gets all the calls that were made to Save.
+// Check the length with:
+//
+//	len(mockedStore.SaveCalls())
+func (mock *StoreMock) SaveCalls() []struct {
+	Ctx context.Context
+	Key string
+	UID int
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+		UID int
+	}
+	mock.lockSave.RLock()
+	calls = mock.calls.Save
+	mock.lockSave.RUnlock()
+	return calls
+}
+
 // Ensure, that HealthRepositoryMock does implement HealthRepository.
 // If this is not the case, regenerate this file with moq.
 var _ HealthRepository = &HealthRepositoryMock{}
