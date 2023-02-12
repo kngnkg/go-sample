@@ -16,17 +16,19 @@ CTRL+C
 curl -i localhost:8080/health
 ### ユーザ登録
 curl --silent localhost:8080/register -F "name=test" -F "username=testUserName" -F "password=testPassword" -F "role=admin" -F "email=example@email.com" -F "address=testAddress" -F "phone=000-0000-0000" -F "website=example.com" -F "company=testCompany"
+curl --silent localhost:8080/register -F "name=test" -F "username=testGeneral" -F "password=testGeneral" -F "role=general" -F "email=example@email.com" -F "address=testAddress" -F "phone=000-0000-0000" -F "website=example.com" -F "company=testCompany"
 ### ログイン
 curl --silent localhost:8080/login -F "username=testUserName" -F "password=testPassword" | jq .
 curl -i localhost:8080/login -F "username=testUserName" -F "password=testPassword"
+curl --silent localhost:8080/login -F "username=testGeneral" -F "password=testGeneral" | jq .
 ### 発行されたトークンを設定
 export JWT_TOKEN=xxx
 ### ユーザーネームで検索
 curl --silent "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN" | jq .
 curl -i "localhost:8080/auth/user?user_name=testUserName" -H "Authorization:Bearer $JWT_TOKEN"
 ### 全ユーザーを取得
-curl --silent "localhost:8080/auth/users" -H "Authorization:Bearer $JWT_TOKEN" | jq .
-curl -i "localhost:8080/auth/users" -H "Authorization:Bearer $JWT_TOKEN"
+curl --silent "localhost:8080/auth/admin/users" -H "Authorization:Bearer $JWT_TOKEN" | jq .
+curl -i "localhost:8080/auth/admin/users" -H "Authorization:Bearer $JWT_TOKEN"
 ### ログアウト
 curl --silent "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN" | jq .
 curl -i "localhost:8080/auth/logout" -H "Authorization:Bearer $JWT_TOKEN"

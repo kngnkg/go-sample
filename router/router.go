@@ -44,24 +44,33 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		return nil, nil, err
 	}
 
-	router.Use(GetCorsMiddleware())
+	router.Use(CorsMiddleware())
+
 	router.GET("/health", healthHandler.HealthCheck)
+
 	router.POST("/register", userHandler.RegisterUser)
 	router.POST("/login", authMiddleware.LoginHandler)
+
 	auth := router.Group("/auth")
 	auth.GET("/refresh_token", authMiddleware.RefreshHandler)
 	auth.Use(authMiddleware.MiddlewareFunc())
 	{
 		auth.GET("/logout", authMiddleware.LogoutHandler)
-		auth.GET("/users", userHandler.GetAllUsers)
 		auth.GET("/user", userHandler.GetUser)
+
+		// 管理者専用
+		admin := auth.Group("/admin")
+		admin.Use(j.AdminMiddleware())
+		{
+			admin.GET("/users", userHandler.GetAllUsers)
+		}
 	}
 
 	return router, cleanup, nil
 }
 
 // CORSの設定
-func GetCorsMiddleware() gin.HandlerFunc {
+func CorsMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		// 許可したいHTTPメソッドの一覧
 		AllowMethods: []string{

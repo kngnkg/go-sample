@@ -17,7 +17,7 @@ import (
 //
 // handler: 検証したいハンドラ
 // reqMethod: リクエストメソッド
-// end: エンドポイント
+// queryParam: クエリパラメータ
 // reqBody: リクエストボディ
 // wantStatus: 期待するステータスコード
 // wantRespFile: 期待するレスポンスボディのファイルパス
@@ -52,6 +52,36 @@ func CheckHandlerFunc(
 	)
 }
 
+// ミドルウェアを検証する。
+//
+// middleware: 検証したいミドルウェア
+// wantStatus: 期待するステータスコード
+// wantRespFile: 期待するレスポンスボディのファイルパス
+func CheckMiddleware(
+	t *testing.T,
+	middleware gin.HandlerFunc,
+	wantStatus int,
+	wantRespFile string) {
+	t.Helper()
+
+	url := RunTestServerWithMiddleware(t, middleware)
+
+	resp := SendRequest(
+		t,
+		url,
+		"GET",
+		"",
+		nil,
+	)
+
+	AssertResponse(
+		t,
+		resp,
+		wantStatus,
+		LoadFile(t, wantRespFile),
+	)
+}
+
 // テスト用のサーバーを起動し、URLを返す。
 // handler: 検証したいハンドラ
 // reqMethod: リクエストメソッド
@@ -72,6 +102,29 @@ func RunTestServer(t *testing.T, handler gin.HandlerFunc, reqMethod string) stri
 	t.Cleanup(func() { testServer.Close() })
 
 	return fmt.Sprintf(testServer.URL + end)
+}
+
+// テスト用のサーバーを起動し、URLを返す。
+// middleware: 検証したいミドルウェア
+func RunTestServerWithMiddleware(t *testing.T, middleware gin.HandlerFunc) string {
+	t.Helper()
+
+	handler := func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "hello",
+		})
+	}
+
+	router := gin.Default()
+	group := router.Group("/group")
+	group.Use(middleware)
+	{
+		group.GET("/test", handler)
+	}
+	testServer := httptest.NewServer(router) // サーバを立てる
+	t.Cleanup(func() { testServer.Close() })
+
+	return fmt.Sprintf(testServer.URL + "/group/test")
 }
 
 // リクエストを送信し、レスポンスを返す。

@@ -52,7 +52,7 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": u.Id})
 }
 
-// GET /auth/users
+// GET /auth/admin/users
 // 全てのユーザーを取得し、レスポンスとして返す
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 	users, err := uh.Service.GetAllUsers(c.Request.Context())

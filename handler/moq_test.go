@@ -96,6 +96,9 @@ var _ AuthService = &AuthServiceMock{}
 //			IdentityHandlerFunc: func(c *gin.Context) interface{} {
 //				panic("mock out the IdentityHandler method")
 //			},
+//			IsAdminFunc: func(c *gin.Context) bool {
+//				panic("mock out the IsAdmin method")
+//			},
 //			LogoutFunc: func(c *gin.Context) error {
 //				panic("mock out the Logout method")
 //			},
@@ -117,6 +120,9 @@ type AuthServiceMock struct {
 
 	// IdentityHandlerFunc mocks the IdentityHandler method.
 	IdentityHandlerFunc func(c *gin.Context) interface{}
+
+	// IsAdminFunc mocks the IsAdmin method.
+	IsAdminFunc func(c *gin.Context) bool
 
 	// LogoutFunc mocks the Logout method.
 	LogoutFunc func(c *gin.Context) error
@@ -143,6 +149,11 @@ type AuthServiceMock struct {
 			// C is the c argument value.
 			C *gin.Context
 		}
+		// IsAdmin holds details about calls to the IsAdmin method.
+		IsAdmin []struct {
+			// C is the c argument value.
+			C *gin.Context
+		}
 		// Logout holds details about calls to the Logout method.
 		Logout []struct {
 			// C is the c argument value.
@@ -157,6 +168,7 @@ type AuthServiceMock struct {
 	lockAuthenticator   sync.RWMutex
 	lockAuthorizator    sync.RWMutex
 	lockIdentityHandler sync.RWMutex
+	lockIsAdmin         sync.RWMutex
 	lockLogout          sync.RWMutex
 	lockPayloadFunc     sync.RWMutex
 }
@@ -258,6 +270,38 @@ func (mock *AuthServiceMock) IdentityHandlerCalls() []struct {
 	mock.lockIdentityHandler.RLock()
 	calls = mock.calls.IdentityHandler
 	mock.lockIdentityHandler.RUnlock()
+	return calls
+}
+
+// IsAdmin calls IsAdminFunc.
+func (mock *AuthServiceMock) IsAdmin(c *gin.Context) bool {
+	if mock.IsAdminFunc == nil {
+		panic("AuthServiceMock.IsAdminFunc: method is nil but AuthService.IsAdmin was just called")
+	}
+	callInfo := struct {
+		C *gin.Context
+	}{
+		C: c,
+	}
+	mock.lockIsAdmin.Lock()
+	mock.calls.IsAdmin = append(mock.calls.IsAdmin, callInfo)
+	mock.lockIsAdmin.Unlock()
+	return mock.IsAdminFunc(c)
+}
+
+// IsAdminCalls gets all the calls that were made to IsAdmin.
+// Check the length with:
+//
+//	len(mockedAuthService.IsAdminCalls())
+func (mock *AuthServiceMock) IsAdminCalls() []struct {
+	C *gin.Context
+} {
+	var calls []struct {
+		C *gin.Context
+	}
+	mock.lockIsAdmin.RLock()
+	calls = mock.calls.IsAdmin
+	mock.lockIsAdmin.RUnlock()
 	return calls
 }
 

@@ -123,3 +123,13 @@ func (as *AuthService) Logout(c *gin.Context) error {
 	claims := jwt.ExtractClaims(c)
 	return as.Store.Delete(c.Request.Context(), claims[JwtIdKey].(string))
 }
+
+// ログインユーザーが管理者かどうか判定する
+func (as *AuthService) IsAdmin(c *gin.Context) bool {
+	claims := jwt.ExtractClaims(c)
+	role, ok := claims[RoleKey].(string)
+	if !ok {
+		return false
+	}
+	return role == "admin"
+}
