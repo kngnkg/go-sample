@@ -31,7 +31,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db DBConnection, u *model
 	if err != nil {
 		var mysqlError *mysql.MySQLError
 		if errors.As(err, &mysqlError) && mysqlError.Number == ErrCodeMySQLDuplicateEntry {
-			err = fmt.Errorf("cannot create same name user: %w", ErrAlreadyEntry)
+			err = fmt.Errorf("cannot create same name user, username=%s: %w", u.UserName, ErrAlreadyEntry)
 		}
 		return nil, err
 	}
@@ -55,18 +55,28 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db DBConnection, use
 			WHERE user_name = ?;`
 	if err := db.GetContext(ctx, u, query, userName); err != nil {
 		if err == sql.ErrNoRows {
-			err = fmt.Errorf("user not found: %w", ErrNotFound)
+			err = fmt.Errorf("user not found, username=%s: %w", userName, ErrNotFound)
 		}
 		return nil, err
 	}
 	return u, nil
 }
 
-// DBのユーザーを全て削除する
-func (r *Repository) DeleteUserAll(ctx context.Context, db DBConnection) error {
-	query := `DELETE FROM user;`
-	if _, err := db.ExecContext(ctx, query); err != nil {
-		return err
+// 全ユーザーを取得する。
+func (r *Repository) GetAllUsers(ctx context.Context, db DBConnection) ([]*model.User, error) {
+	users := model.Users{}
+	query := `SELECT
+				id, name, user_name,
+				role, email, address,
+				phone, website, company,
+				created, modified
+			FROM user;`
+	if err := db.SelectContext(ctx, &users, query); err != nil {
+		return nil, err
 	}
-	return nil
+	// ユーザーが一人も存在しない場合
+	if len(users) == 0 {
+		return nil, fmt.Errorf("none of the users exist: %w", ErrNotFound)
+	}
+	return users, nil
 }

@@ -168,3 +168,42 @@ func TestLogoutRoute(t *testing.T) {
 		})
 	}
 }
+
+func TestAdminMiddleware(t *testing.T) {
+	tests := []struct {
+		name         string
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+	}{
+		{
+			"ok",
+			http.StatusOK,
+			"testdata/admin/ok_response.json.golden",
+		},
+		{
+			"unAuthorized",
+			http.StatusUnauthorized,
+			"testdata/admin/unauthorized_response.json.golden",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			serviceMoq := &AuthServiceMock{}
+			serviceMoq.IsAdminFunc = func(c *gin.Context) bool {
+				return tt.name == "ok"
+			}
+			j := &JWTer{
+				Service: serviceMoq,
+				Clocker: clock.FixedClocker{},
+			}
+			got := j.AdminMiddleware()
+
+			testutil.CheckMiddleware(
+				t,
+				got,
+				tt.wantStatus,
+				tt.wantRespFile,
+			)
+		})
+	}
+}

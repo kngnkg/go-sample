@@ -27,6 +27,7 @@ type AuthService interface {
 	IdentityHandler(c *gin.Context) interface{}
 	Authorizator(data interface{}, c *gin.Context) bool
 	Logout(c *gin.Context) error
+	IsAdmin(c *gin.Context) bool
 }
 
 type JWTer struct {
@@ -78,6 +79,17 @@ func (j *JWTer) NewJWTMiddleware() (*jwt.GinJWTMiddleware, error) {
 		// 現在の時間(トークンが生成された時間)
 		TimeFunc: j.Clocker.Now,
 	})
+}
+
+// 管理者のみ
+func (j *JWTer) AdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !j.Service.IsAdmin(c) {
+			unauthorized(c, http.StatusUnauthorized, "許可されていません。")
+			c.Abort()
+		}
+		c.Next()
+	}
 }
 
 func (j *JWTer) logoutResponse(c *gin.Context, code int) {

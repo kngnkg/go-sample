@@ -238,7 +238,6 @@ func TestAuthService_IdentityHandler(t *testing.T) {
 				Store: moqStore,
 			}
 
-			// リクエストの値がnullになっている
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
 			c.Set("JWT_PAYLOAD", as.PayloadFunc(tt.payloadFuncArgs.data))
 			// リクエストを作成
@@ -316,6 +315,68 @@ func TestAuthService_Authorizator(t *testing.T) {
 
 			if got := as.Authorizator(tt.args.data, c); got != tt.want {
 				t.Errorf("AuthService.Authorizator() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAuthService_IsAdmin(t *testing.T) {
+	type payloadFuncArgs struct {
+		data interface{}
+	}
+	validUser := fixture.User(&model.User{
+		UserName: UserName,
+		Role:     Role,
+	})
+
+	tests := []struct {
+		name            string
+		payloadFuncArgs payloadFuncArgs
+		want            bool
+	}{
+		{
+			"ok",
+			payloadFuncArgs{validUser},
+			true,
+		},
+		{
+			"notAdmin",
+			payloadFuncArgs{fixture.User(&model.User{
+				UserName: UserName,
+				Role:     "general",
+			})},
+			false,
+		},
+		{
+			"failedToGetClaim",
+			payloadFuncArgs{nil},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqStore := &StoreMock{
+				SaveFunc: func(ctx context.Context, key string, uid int) error {
+					return nil
+				},
+				LoadFunc: func(ctx context.Context, key string) (int, error) {
+					return 1, nil
+				},
+			}
+			as := &AuthService{
+				DB:    &DBConnectionMock{},
+				Repo:  &AuthRepositoryMock{},
+				Store: moqStore,
+			}
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Set("JWT_PAYLOAD", as.PayloadFunc(tt.payloadFuncArgs.data))
+			// リクエストを作成
+			req := httptest.NewRequest("GET", "/test", nil)
+			// リクエスト情報をコンテキストに入れる
+			c.Request = req
+
+			if got := as.IsAdmin(c); got != tt.want {
+				t.Errorf("AuthService.IsAdmin() = %v, want %v", got, tt.want)
 			}
 		})
 	}

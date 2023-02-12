@@ -8,6 +8,13 @@ import (
 	"github.com/kwtryo/go-sample/store"
 )
 
+type key int
+
+const (
+	// コンテキストに入れるテストの名前のKey
+	TEST_NAME_KEY key = iota
+)
+
 func TestHealthService_HealthCheck(t *testing.T) {
 	type fields struct {
 		DB   store.DBConnection

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -86,6 +87,78 @@ func TestUserHandler_RegisterUser(t *testing.T) {
 	}
 }
 
+func TestUserHandler_GetAllUsers(t *testing.T) {
+	// ランダムなユーザーを5人生成する
+	cl := clock.FixedClocker{}
+	users := model.Users{}
+	for i := 1; i < 6; i++ {
+		str := strconv.Itoa(i)
+		user := fixture.User(&model.User{
+			Id:       i,
+			Name:     "fullName" + str,
+			UserName: "userName" + str,
+			Password: "testPassword",
+			Created:  cl.Now(),
+			Modified: cl.Now(),
+		})
+		user.Password = "testPassword"
+		users = append(users, user)
+	}
+	moqErr := errors.New("err from mock")
+
+	tests := []struct {
+		name         string
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンス
+	}{
+		{
+			"ok",
+			http.StatusOK,
+			"testdata/get_all_users/ok_response.json.golden",
+		},
+		// ユーザーが見つからなかった場合
+		{
+			"notFound",
+			http.StatusInternalServerError,
+			"testdata/get_all_users/not_found_response.json.golden",
+		},
+		// 内部エラー
+		{
+			"serverError",
+			http.StatusInternalServerError,
+			"testdata/get_all_users/server_err_response.json.golden",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqService := &UserServiceMock{}
+			moqService.GetAllUsersFunc =
+				func(ctx context.Context) (model.Users, error) {
+					if tt.name == "serverError" {
+						return nil, moqErr
+					}
+					if tt.name == "notFound" {
+						return nil, store.ErrNotFound
+					}
+					return users, nil
+				}
+			uh := &UserHandler{
+				Service: moqService,
+			}
+
+			testutil.CheckHandlerFunc(
+				t,
+				uh.GetAllUsers,
+				"GET",
+				"",
+				nil,
+				tt.wantStatus,
+				tt.wantRespFile,
+			)
+		})
+	}
+}
+
 func TestUserHandler_GetUser(t *testing.T) {
 	const (
 		UserName = "testUserName"
@@ -118,16 +191,25 @@ func TestUserHandler_GetUser(t *testing.T) {
 			http.StatusNotFound,
 			"testdata/get_user/not_found_response.json.golden",
 		},
+		{
+			"internalServerError",
+			validUser.UserName,
+			http.StatusInternalServerError,
+			"testdata/get_user/server_err_response.json.golden",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			moqService := &UserServiceMock{}
 			moqService.GetUserFunc = func(ctx context.Context, userName string) (*model.User, error) {
-				if userName == UserName {
-					validUser.Password = "hashedPassword"
-					return validUser, nil
+				if userName != UserName {
+					return nil, store.ErrNotFound
 				}
-				return nil, store.ErrNotFound
+				if tt.name == "internalServerError" {
+					return nil, errors.New("err from mock")
+				}
+				validUser.Password = "hashedPassword"
+				return validUser, nil
 			}
 			uh := &UserHandler{
 				Service: moqService,

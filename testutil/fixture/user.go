@@ -99,6 +99,21 @@ func LoginFormBody(l *model.Login) *strings.Reader {
 	return body
 }
 
+func UserFormRequest(u *model.User) *model.FormRequest {
+	user := User(u)
+	return &model.FormRequest{
+		Name:     user.Name,
+		UserName: user.UserName,
+		Password: u.Password, // ハッシュ化しない
+		Role:     user.Role,
+		Email:    user.Email,
+		Address:  user.Address,
+		Phone:    user.Phone,
+		Website:  user.Website,
+		Company:  user.Company,
+	}
+}
+
 // ユーザー登録時に送信されるボディ
 func RegisterUserBody(u *model.User) url.Values {
 	user := User(u)
