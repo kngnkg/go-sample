@@ -3,7 +3,7 @@ package testutil
 import (
 	"testing"
 
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/model"
 )
 
 const (

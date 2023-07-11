@@ -7,7 +7,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/clock"
+	"github.com/kngnkg/go-sample/clock"
 )
 
 //go:embed cert/secret.pem

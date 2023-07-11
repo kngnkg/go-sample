@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/kwtryo/go-sample/store"
+	"github.com/kngnkg/go-sample/store"
 )
 
 type HealthRepository interface {

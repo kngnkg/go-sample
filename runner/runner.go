@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/config"
+	"github.com/kngnkg/go-sample/config"
 	"golang.org/x/sync/errgroup"
 )
 

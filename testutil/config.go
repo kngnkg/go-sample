@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/kwtryo/go-sample/config"
+	"github.com/kngnkg/go-sample/config"
 )
 
 // テスト用のconfigを返す

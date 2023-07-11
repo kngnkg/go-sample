@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/model"
 )
 
 // テスト用のユーザを登録する。

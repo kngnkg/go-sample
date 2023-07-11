@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/store"
-	"github.com/kwtryo/go-sample/testutil"
-	"github.com/kwtryo/go-sample/testutil/fixture"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/store"
+	"github.com/kngnkg/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil/fixture"
 )
 
 func TestUserHandler_RegisterUser(t *testing.T) {

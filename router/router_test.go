@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kwtryo/go-sample/config"
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kngnkg/go-sample/config"
+	"github.com/kngnkg/go-sample/testutil"
 )
 
 func TestSetupRouter(t *testing.T) {

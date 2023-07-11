@@ -7,7 +7,7 @@ import (
 	"context"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/model"
 	"sync"
 )
 

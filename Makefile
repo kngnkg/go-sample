@@ -3,7 +3,7 @@
 
 DOCKER_TAG := latest
 build: ## Build docker image to deploy
-	docker build -t kwtryo/go-sample:${DOCKER_TAG} \
+	docker build -t kngnkg/go-sample:${DOCKER_TAG} \
 		--target deploy ./
 
 build-local: ## Build docker image to local development

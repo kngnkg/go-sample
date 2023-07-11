@@ -1,4 +1,4 @@
-module github.com/kwtryo/go-sample
+module github.com/kngnkg/go-sample
 
 go 1.19
 

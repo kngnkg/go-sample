@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/model"
 	"golang.org/x/crypto/bcrypt"
 )
 

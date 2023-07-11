@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/model"
 )
 
 // ユーザーをDBに登録し、登録したユーザーを返す。

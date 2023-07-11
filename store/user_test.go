@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/testutil"
-	"github.com/kwtryo/go-sample/testutil/fixture"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 )
 

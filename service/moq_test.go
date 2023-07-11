@@ -5,8 +5,8 @@ package service
 
 import (
 	"context"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/store"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/store"
 	"sync"
 )
 

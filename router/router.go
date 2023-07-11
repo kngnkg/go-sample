@@ -6,11 +6,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/config"
-	"github.com/kwtryo/go-sample/handler"
-	"github.com/kwtryo/go-sample/service"
-	"github.com/kwtryo/go-sample/store"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/config"
+	"github.com/kngnkg/go-sample/handler"
+	"github.com/kngnkg/go-sample/service"
+	"github.com/kngnkg/go-sample/store"
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {

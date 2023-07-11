@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil"
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {

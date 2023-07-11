@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kwtryo/go-sample/config"
+	"github.com/kngnkg/go-sample/config"
 	"github.com/redis/go-redis/v9"
 )
 

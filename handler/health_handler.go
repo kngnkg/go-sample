@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/model"
+	"github.com/kngnkg/go-sample/model"
 )
 
 type HealthService interface {
