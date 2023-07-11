@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/kwtryo/go-sample/config"
-	"github.com/kwtryo/go-sample/router"
-	"github.com/kwtryo/go-sample/runner"
+	"github.com/kngnkg/go-sample/config"
+	"github.com/kngnkg/go-sample/router"
+	"github.com/kngnkg/go-sample/runner"
 )
 
 // go run . {任意のポート番号}

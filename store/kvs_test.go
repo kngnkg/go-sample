@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil"
 	"github.com/redis/go-redis/v9"
 )
 

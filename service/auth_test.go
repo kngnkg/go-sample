@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/store"
-	"github.com/kwtryo/go-sample/testutil/fixture"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/store"
+	"github.com/kngnkg/go-sample/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -173,9 +173,9 @@ func TestAuthService_PayloadFunc(t *testing.T) {
 
 			got := as.PayloadFunc(tt.args.data)
 			if tt.name == "ok" {
-				assert.Equal(t, "github.com/kwtryo/go-sample", got[IssuerKey])
+				assert.Equal(t, "github.com/kngnkg/go-sample", got[IssuerKey])
 				assert.Equal(t, "access_token", got[SubjectKey])
-				assert.Equal(t, "github.com/kwtryo/go-sample", got[AudienceKey])
+				assert.Equal(t, "github.com/kngnkg/go-sample", got[AudienceKey])
 				assert.Equal(t, tt.wantUserName, got[UserNameKey])
 				assert.Equal(t, tt.wantRole, got[RoleKey])
 			} else {

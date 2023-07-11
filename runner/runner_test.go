@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/errgroup"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/testutil"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/testutil"
 )
 
 func TestRepository_Ping(t *testing.T) {

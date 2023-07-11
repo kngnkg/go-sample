@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/store"
-	"github.com/kwtryo/go-sample/testutil/fixture"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/store"
+	"github.com/kngnkg/go-sample/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )

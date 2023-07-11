@@ -5,7 +5,7 @@ $ go run . 18080
 ### デプロイ用コンテナイメージの作成
 $ make build
 ### 28000ポートで動作確認用コンテナの起動
-$ docker run -p 28000:80 kwtryo/go-sample:latest
+$ docker run -p 28000:80 kngnkg/go-sample:latest
 ### 別ターミナルでcurl
 $ time curl -i localhost:28000/ping
 ### 5秒経過前にdocker runコマンドを中断
@@ -59,7 +59,7 @@ openssl genrsa 4096 > secret.pem
 openssl rsa -pubout < secret.pem > public.pem
 
 
-mysqldef -u todo -p todo -h docker.for.mac.localhost -P 33306 todo 
+mysqldef -u todo -p todo -h docker.for.mac.localhost -P 33306 todo
 #DBコンテナに入る
 $ docker exec -it todo-db bash
 #mysqlへ接続

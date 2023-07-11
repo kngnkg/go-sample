@@ -8,8 +8,8 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/store"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/store"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -72,9 +72,9 @@ func (as *AuthService) PayloadFunc(data interface{}) jwt.MapClaims {
 
 	tok := jwt.MapClaims{
 		JwtIdKey:    uuid.New().String(),           // ユニークID
-		IssuerKey:   "github.com/kwtryo/go-sample", // 発行者
+		IssuerKey:   "github.com/kngnkg/go-sample", // 発行者
 		SubjectKey:  "access_token",                // 用途
-		AudienceKey: "github.com/kwtryo/go-sample", // 想定利用者
+		AudienceKey: "github.com/kngnkg/go-sample", // 想定利用者
 		// 以下独自クレーム
 		UserNameKey: v.UserName,
 		RoleKey:     v.Role,

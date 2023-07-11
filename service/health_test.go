@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kwtryo/go-sample/store"
+	"github.com/kngnkg/go-sample/store"
 )
 
 type key int

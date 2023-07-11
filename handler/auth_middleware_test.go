@@ -10,11 +10,11 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/go-sample/clock"
-	"github.com/kwtryo/go-sample/model"
-	"github.com/kwtryo/go-sample/service"
-	"github.com/kwtryo/go-sample/testutil"
-	"github.com/kwtryo/go-sample/testutil/fixture"
+	"github.com/kngnkg/go-sample/clock"
+	"github.com/kngnkg/go-sample/model"
+	"github.com/kngnkg/go-sample/service"
+	"github.com/kngnkg/go-sample/testutil"
+	"github.com/kngnkg/go-sample/testutil/fixture"
 )
 
 func TestEmbed(t *testing.T) {
@@ -51,9 +51,9 @@ func TestLoginRoute(t *testing.T) {
 
 	tok := jwt.MapClaims{
 		service.JwtIdKey:    uuid,                          // ユニークID
-		service.IssuerKey:   "github.com/kwtryo/go-sample", // 発行者
+		service.IssuerKey:   "github.com/kngnkg/go-sample", // 発行者
 		service.SubjectKey:  "access_token",                // 用途
-		service.AudienceKey: "github.com/kwtryo/go-sample", // 想定利用者
+		service.AudienceKey: "github.com/kngnkg/go-sample", // 想定利用者
 		// 以下独自クレーム
 		service.UserNameKey: user.UserName,
 		service.RoleKey:     user.Role,
